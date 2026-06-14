@@ -1,0 +1,96 @@
+{% extends "layout.html" %}
+{% from "macros.html" import printease_badge %}
+
+{% block active_nav %}
+  <a href="{{ url_for('home') }}">Home</a>
+  <a href="{{ url_for('contact') }}">Contact</a>
+  <a href="{{ url_for('my_orders') }}">My Orders</a>
+{% endblock active_nav %}
+
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', path='css/order.css') }}?v=3"/>
+{% endblock styles %}
+
+{% block content %}
+<div class="order-wrapper dot-grid-bg">
+  <div class="order-card" id="orderCard" style="display: none;">
+
+    <div class="receipt-body">
+
+      <div class="order-banner banner-loading" id="statusBanner">
+        <div class="status-icon" id="statusIcon"></div>
+        <h2 id="statusTitle">Checking Order…</h2>
+        <p id="statusDesc">Please wait while we fetch your details.</p>
+      </div>
+
+      <div class="receipt-divider">
+        <div class="hole-left"></div>
+        <div class="hole-right"></div>
+      </div>
+
+      <div class="order-details">
+        <p class="details-heading">Order Summary</p>
+        <div class="receipt-header-info">
+          <h3 class="order-title" id="o-id">Order #—</h3>
+          <span class="order-datetime" id="o-datetime">—</span>
+        </div>
+
+        <div class="config-box">
+          <div class="config-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="file-icon"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+          </div>
+          <div class="config-details">
+            <div class="file-name">Print Document (PDF)</div>
+            <div class="config-meta">
+              <span id="o-paper">—</span> &bull; <span id="o-color">—</span> &bull; <span id="o-sides">—</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="price-breakup">
+          <div class="price-row">
+            <span class="price-label" id="o-label-price-per-page">Price per page</span>
+            <span class="price-value" id="o-price-per-page">₹0.00</span>
+          </div>
+          <div class="price-row">
+            <div class="price-info">
+              <span class="price-label">Total pages printed</span>
+              <span class="price-sub" id="o-total-pages-printed-sub">—</span>
+            </div>
+            <span class="price-value" id="o-total-pages-printed">—</span>
+          </div>
+          <div class="price-row">
+            <span class="price-label">Base print cost</span>
+            <span class="price-value" id="o-base-print-cost">₹0.00</span>
+          </div>
+          <div class="price-row" id="row-discount" style="display: none;">
+            <span class="price-label" id="o-discount-label-text">Double-sided discount (20%)</span>
+            <span class="price-value discount-val" id="o-discount-val">-₹0.00</span>
+          </div>
+          <div class="price-row grand-total-row">
+            <span class="price-label">Grand total</span>
+            <span class="price-value" id="o-grand-total">₹0.00</span>
+          </div>
+        </div>
+
+        <div class="detail-row total-row">
+          <span class="detail-label">Amount Paid</span>
+          <span class="detail-value" id="o-cost">—</span>
+        </div>
+      </div>
+
+      <div class="receipt-divider-2"></div>
+
+      <div class="order-actions" id="actionContainer"></div>
+
+      {{ printease_badge('Thank you for printing with us', 'receipt') }}
+
+    </div>
+
+  </div>
+</div>
+{% endblock content %}
+
+{% block scripts %}
+<script src="{{ url_for('static', path='js/order.js') }}?v=3"></script>
+{% endblock scripts %}

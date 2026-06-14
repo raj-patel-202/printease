@@ -1,0 +1,97 @@
+{% extends "admin_layout.html" %}
+
+{% block styles %}
+<style>
+</style>
+{% endblock %}
+
+{% block content %}
+<main class="page-wrapper dot-grid-bg">
+  <div class="auth-container reveal">
+    
+    <div class="auth-brand">
+      <h1>Admin <em>Portal</em></h1>
+      <p>Secure access for PrintEase administrators</p>
+    </div>
+
+    <div class="auth-card">
+      <form id="admin-login-form" autocomplete="off">
+        
+        <div class="form-group">
+          <label for="email">Admin Email</label>
+          <div class="input-wrap">
+            <input 
+              type="email" 
+              id="email" 
+              name="username" 
+              placeholder="admin@example.com" 
+              required 
+            />
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 28px;">
+          <label for="password">Password</label>
+          <div class="input-wrap">
+            <input 
+              type="password" 
+              id="password" 
+              name="password" 
+              placeholder="••••••••"
+              required 
+            />
+          </div>
+        </div>
+
+        <button type="submit" id="submit-btn" class="btn-submit">
+          Login as Admin
+        </button>
+
+      </form>
+    </div>
+  </div>
+</main>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  document.getElementById('admin-login-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = document.getElementById('submit-btn');
+    const emailInput = document.getElementById('email');
+    const passInput = document.getElementById('password');
+    
+    btn.disabled = true;
+    btn.innerHTML = 'Logging in...';
+    emailInput.classList.remove('error');
+    passInput.classList.remove('error');
+
+    const formData = new URLSearchParams(new FormData(e.target));
+
+    try {
+      const res = await fetch('/api/admin/token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: formData
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.detail || 'Login failed');
+      }
+
+      window.location.href = '/admin/dashboard';
+    } catch (err) {
+      window.showModal({
+        type: 'error',
+        title: 'Login Failed',
+        message: err.message
+      });
+      emailInput.classList.add('error');
+      passInput.classList.add('error');
+      btn.disabled = false;
+      btn.innerHTML = 'Login as Admin';
+    }
+  });
+</script>
+{% endblock %}

@@ -1,0 +1,60 @@
+{% extends "layout.html" %}
+{% from "macros.html" import printease_badge %}
+
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', path='css/home.css') }}"/>
+{% endblock %}
+
+{% block active_nav %}
+  <a href="{{ url_for('home') }}" class="active" data-icon="🏠">Home</a>
+  <a href="{{ url_for('contact') }}" data-icon="✉️">Contact</a>
+{% endblock %}
+
+{% block content %}
+<div class="home-page dot-grid-bg">
+  <section class="hero">
+    <h1 class="hero-title reveal">Your Documents,<br/><em>Printed Perfectly.</em></h1>
+    <p class="hero-sub reveal">
+      Upload your files from anywhere and get crisp, high-quality prints ready for pickup — in minutes, not hours.
+    </p>
+
+    <div class="upload-card reveal" id="uploadCard">
+      <div class="upload-icon"><img src="{{ url_for('static', path='icons/pdf.svg') }}" alt="PDF" style="height: 64px; width: auto;" class="svg-icon"></div>
+      <p class="upload-label">Drag & drop your file here</p>
+      <p class="upload-hint">PDF — up to 20 MB</p>
+      <input type="file" id="homeFileInput" accept=".pdf" style="display:none;" />
+      <button class="btn-upload" id="uploadBtn">Choose File to Print</button>
+    </div>
+
+    <p class="upload-note" id="uploadNote"></p>
+  </section>
+
+  <section class="features">
+    <div class="features-grid">
+      <div class="feature-card reveal">
+        <div class="feature-icon"><img src="{{ url_for('static', path='icons/prince_affortable.svg') }}" alt="Affordable" style="height: 48px; width: auto;" class="svg-icon"></div>
+        <h3>Affordable Prices</h3>
+        <p>Transparent, student-friendly pricing. No hidden fees — just great prints at a fair cost.</p>
+      </div>
+      <div class="feature-card reveal">
+        <div class="feature-icon"><img src="{{ url_for('static', path='icons/fast_service.svg') }}" alt="Fast" style="height: 48px; width: auto;" class="svg-icon"></div>
+        <h3>Fast Service</h3>
+        <p>Your order is placed in a queue and processed efficiently. Quick turnaround, every time.</p>
+      </div>
+      <div class="feature-card reveal">
+        <div class="feature-icon"><img src="{{ url_for('static', path='icons/upload_and_pay_online.svg') }}" alt="Upload" style="height: 48px; width: auto;" class="svg-icon"></div>
+        <h3>Upload & Pay Online</h3>
+        <p>Upload your file and pay securely online, then simply walk into the shop to collect your prints.</p>
+      </div>
+    </div>
+  </section>
+</div>
+{% endblock %}
+
+{% block printease_badge %}
+{{ printease_badge() }}
+{% endblock %}
+
+{% block scripts %}
+<script type="module" src="{{ url_for('static', path='js/home.js') }}"></script>
+{% endblock %}

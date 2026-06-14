@@ -1,0 +1,100 @@
+{% extends "layout.html" %}
+{% from "macros.html" import printease_badge %}
+
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', path='css/contact.css') }}"/>
+{% endblock %}
+
+{% block active_nav %}
+  <a href="{{ url_for('home') }}">Home</a>
+  <a href="{{ url_for('contact') }}" class="active">Contact</a>
+{% endblock %}
+
+{% block content %}
+<div class="contact-page dot-grid-bg">
+  <main class="contact-container">
+
+    <div class="contact-info reveal">
+      <h2>We're here to<br/><em>help you.</em></h2>
+      <p>Having trouble with an order? Got a question about pricing or formats? Drop us a message and we'll get back to you within a few hours.</p>
+
+      <div class="info-items">
+        <div class="info-item">
+          <div class="info-icon"><img src="{{ url_for('static', path='icons/location.svg') }}" alt="Location" style="height: 32px; width: auto;" class="svg-icon"></div>
+          <div class="info-text">
+            <strong>Location</strong>
+            <span>123 Print Avenue,<br/>Tech District, Cityville</span>
+          </div>
+        </div>
+        <div class="info-item">
+          <div class="info-icon"><img src="{{ url_for('static', path='icons/phone.svg') }}" alt="Phone" style="height: 32px; width: auto;" class="svg-icon"></div>
+          <div class="info-text">
+            <strong>Phone</strong>
+            <span>+1 (555) 123-4567</span>
+          </div>
+        </div>
+        <div class="info-item">
+          <div class="info-icon"><img src="{{ url_for('static', path='icons/email.svg') }}" alt="Email" style="height: 32px; width: auto;" class="svg-icon"></div>
+          <div class="info-text">
+            <strong>Email</strong>
+            <span>hello@example.com</span>
+          </div>
+        </div>
+        <div class="info-item">
+          <div class="info-icon"><img src="{{ url_for('static', path='icons/time.svg') }}" alt="Time" style="height: 32px; width: auto;" class="svg-icon"></div>
+          <div class="info-text">
+            <strong>Working Hours</strong>
+            <span>Mon – Sat, 9:00 AM – 7:00 PM</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="contact-form-card reveal">
+      <h3>Send us a message</h3>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Your Name</label>
+          <input type="text" id="userName" name="name" placeholder="e.g. John Doe" required />
+        </div>
+        <div class="form-group">
+          <label>Your Email</label>
+          <input type="email" id="userEmail" name="email" placeholder="you@example.com" required />
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Subject</label>
+        <select id="userSubject" name="subject" required>
+          <option value="" disabled selected>Select a topic…</option>
+          <option value="Order Issue">Order Issue</option>
+          <option value="Payment Problem">Payment Problem</option>
+          <option value="File Upload Help">File Upload Help</option>
+          <option value="Pricing Inquiry">Pricing Inquiry</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Message</label>
+        <textarea id="userMessage" name="message" placeholder="Describe your issue or question in detail…" required></textarea>
+      </div>
+
+      <input type="hidden" name="botcheck" id="botcheck" style="display: none;">
+      <input type="hidden" id="web3forms_access_key" value="{{ web3forms_access_key }}">
+
+      <button class="btn-send" id="sendBtn"><img src="{{ url_for('static', path='icons/email.svg') }}" alt="Email" style="height: 24px; width: auto; filter: brightness(0) invert(1);" class=""> Send Message</button>
+    </div>
+
+  </main>
+</div>
+{% endblock %}
+
+{% block printease_badge %}
+{{ printease_badge() }}
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', path='js/contact.js') }}"></script>
+{% endblock %}

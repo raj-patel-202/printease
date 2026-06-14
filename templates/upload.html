@@ -1,0 +1,275 @@
+{% extends "layout.html" %}
+{% from "macros.html" import printease_badge %}
+
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', path='css/upload.css') }}"/>
+{% endblock styles %}
+
+{% block active_nav %}
+  <a href="{{ url_for('home') }}">Home</a>
+  <a href="{{ url_for('contact') }}">Contact</a>
+{% endblock active_nav %}
+
+{% block content %}
+<div class="upload-page dot-grid-bg">
+  <div class="upload-page-header">
+    <h1>Configure Your <em>Print Order</em></h1>
+  </div>
+
+  <button
+    type="button"
+    class="mobile-skip-btn"
+    id="skipToPrintBtn"
+    aria-label="Skip to Print Settings"
+    onclick="document.getElementById('printSection').scrollIntoView({behavior:'smooth',block:'start'})">
+    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+      <path d="M8 3v10M3 9l5 5 5-5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    Skip to Print Settings
+  </button>
+
+  <div class="upload-container">
+
+    <div class="preview-section">
+      <div class="preview-section-header">
+        <span class="dot"></span>
+        <span class="dot"></span>
+        <span class="dot"></span>
+        <p id="previewFileName">document.pdf</p>
+      </div>
+      <div class="pdf-zoom-bar" id="pdfZoomBar" hidden>
+        <button type="button" class="pdf-zoom-btn" id="pdfZoomOut" aria-label="Zoom out">−</button>
+        <span class="pdf-zoom-label" id="pdfZoomLabel">100%</span>
+        <button type="button" class="pdf-zoom-btn" id="pdfZoomIn" aria-label="Zoom in">+</button>
+        <button type="button" class="pdf-zoom-btn pdf-zoom-btn-fit" id="pdfZoomReset" aria-label="Fit to width">Fit</button>
+      </div>
+      <div class="pdf-preview-body" id="pdfPreview">
+        <div class="pdf-preview-loading" id="pdfPreviewLoading">Loading preview…</div>
+        <div class="pdf-preview-pages" id="pdfPreviewPages" hidden></div>
+        <div class="pdf-preview-error" id="pdfPreviewError" hidden>
+          <p>Preview could not be rendered on this device.</p>
+          <p style="font-size:0.82rem;opacity:0.75;">Your file is still ready to upload.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-section" id="printSection">
+      <div class="form-section-inner">
+
+        <div class="form-section-header">
+          <div class="form-header-icon">🖨️</div>
+          <h2>Print Settings</h2>
+          <p>Review and configure options before confirming.</p>
+        </div>
+
+        <div class="receipt-divider">
+          <div class="hole-left"></div>
+          <div class="hole-right"></div>
+        </div>
+
+      <div class="form-body">
+        <p class="details-heading">Order Configuration</p>
+        <div id="printOptionsForm">
+
+          <div class="form-group">
+            <label for="filename">File Name</label>
+            <input type="text" id="filename" name="filename" readonly>
+          </div>
+
+          <div class="form-group">
+            <label for="copies">Number of Copies <span style="color:var(--ink-muted);font-weight:400;text-transform:none;">(max 10)</span></label>
+            <input type="number" id="copies" name="copies" min="1" max="10" value="1">
+          </div>
+
+          <hr class="receipt-section-divider" />
+
+          <div class="form-group">
+            <label>Paper Size</label>
+            <div class="radio-grid-2">
+              <label class="radio-label">
+                <input type="radio" name="paper_size" value="A4" checked>
+                <div class="radio-card"><span class="radio-card-title">A4</span></div>
+              </label>
+              <label class="radio-label">
+                <input type="radio" name="paper_size" value="A3">
+                <div class="radio-card"><span class="radio-card-title">A3</span></div>
+              </label>
+              <label class="radio-label">
+                <input type="radio" name="paper_size" value="Letter">
+                <div class="radio-card"><span class="radio-card-title">US Letter</span></div>
+              </label>
+              <label class="radio-label">
+                <input type="radio" name="paper_size" value="Legal">
+                <div class="radio-card"><span class="radio-card-title">Legal</span></div>
+              </label>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Orientation</label>
+            <div class="radio-grid-2">
+              <label class="radio-label">
+                <input type="radio" name="orientation" value="portrait" checked>
+                <div class="radio-card">
+                  <div style="width:60px; height:80px; background:#fff; border:1.5px solid #c4c2ba; border-radius:3px; position:relative; overflow:hidden; margin: 5px 0;">
+                    <div style="position:absolute;top:0;left:0;right:0;height:12px;background:#185FA5;"></div>
+                    <div style="position:absolute;top:18px;left:6px;height:2px;width:40px;background:#dedad3;border-radius:1px;"></div>
+                    <div style="position:absolute;top:24px;left:6px;height:2px;width:34px;background:#dedad3;border-radius:1px;"></div>
+                    <div style="position:absolute;top:30px;left:6px;height:2px;width:44px;background:#dedad3;border-radius:1px;"></div>
+                    <div style="position:absolute;top:36px;left:6px;height:2px;width:28px;background:#dedad3;border-radius:1px;"></div>
+                    <div style="position:absolute;top:42px;left:6px;height:2px;width:40px;background:#dedad3;border-radius:1px;"></div>
+                    <div style="position:absolute;top:48px;left:6px;height:2px;width:36px;background:#dedad3;border-radius:1px;"></div>
+                    <div style="position:absolute;top:54px;left:6px;height:2px;width:44px;background:#dedad3;border-radius:1px;"></div>
+                    <div style="position:absolute;top:60px;left:6px;height:2px;width:30px;background:#dedad3;border-radius:1px;"></div>
+                    <div style="position:absolute;top:66px;left:6px;height:2px;width:42px;background:#dedad3;border-radius:1px;"></div>
+                  </div>
+                  <span class="radio-card-title">Portrait</span>
+                </div>
+              </label>
+
+              <label class="radio-label">
+                <input type="radio" name="orientation" value="landscape">
+                <div class="radio-card">
+                  <div style="width:80px; height:60px; background:#fff; border:1.5px solid #c4c2ba; border-radius:3px; position:relative; overflow:hidden; margin: 15px 0;">
+                    <div style="position:absolute;top:0;left:0;right:0;height:10px;background:#185FA5;"></div>
+                    <div style="position:absolute;top:15px;left:6px;height:2px;width:44px;background:#dedad3;border-radius:1px;"></div>
+                    <div style="position:absolute;top:21px;left:6px;height:2px;width:34px;background:#dedad3;border-radius:1px;"></div>
+                    <div style="position:absolute;top:27px;left:6px;height:2px;width:40px;background:#dedad3;border-radius:1px;"></div>
+                    <div style="position:absolute;top:33px;left:6px;height:2px;width:28px;background:#dedad3;border-radius:1px;"></div>
+                    <div style="position:absolute;top:39px;left:6px;height:2px;width:38px;background:#dedad3;border-radius:1px;"></div>
+                    <div style="position:absolute;top:48px;left:6px;height:2px;width:68px;background:#dedad3;border-radius:1px;"></div>
+                    <div style="position:absolute;top:14px;right:6px;width:24px;height:22px;background:#E1F5EE;border-radius:2px;"></div>
+                  </div>
+                  <span class="radio-card-title">Landscape</span>
+                </div>
+              </label>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Side Mode</label>
+            <div class="radio-grid-2">
+              <label class="radio-label">
+                <input type="radio" name="side_mode" value="single" checked>
+                <div class="radio-card side-mode-card">
+                  <div class="radio-anim-wrap">
+                    <div class="page-scene">
+                      <div class="page-flipper">
+                        <div class="pf-face pf-front">
+                          <span class="pnum">1</span>
+                          <div class="ln l1"></div>
+                          <div class="ln l2"></div>
+                          <div class="ln l3"></div>
+                          <div class="ln l4"></div>
+                          <div class="ln l5"></div>
+                        </div>
+                        <div class="pf-face pf-back is-blank">
+                          <span class="blank-label">blank</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <span class="radio-card-title">Single-Sided</span>
+                </div>
+              </label>
+
+              <label class="radio-label">
+                <input type="radio" name="side_mode" value="double">
+                <div class="radio-card side-mode-card">
+                  <div class="radio-anim-wrap">
+                    <div class="page-scene">
+                      <div class="page-flipper">
+                        <div class="pf-face pf-front">
+                          <span class="pnum">1</span>
+                          <div class="ln l1"></div>
+                          <div class="ln l2"></div>
+                          <div class="ln l3"></div>
+                          <div class="ln l4"></div>
+                          <div class="ln l5"></div>
+                        </div>
+                        <div class="pf-face pf-back is-page-2">
+                          <span class="pnum">2</span>
+                          <div class="ln l1"></div>
+                          <div class="ln l2"></div>
+                          <div class="ln l3"></div>
+                          <div class="ln l4"></div>
+                          <div class="ln l5"></div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <span class="radio-card-title">Double-Sided</span>
+                </div>
+              </label>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Color Mode</label>
+            <div class="radio-grid-2">
+              <label class="radio-label">
+                <input type="radio" name="color_mode" value="bw" checked>
+                <div class="radio-card">
+                  <div class="color-paper bw-paper">
+                    <div class="cp-header"></div>
+                    <div class="cp-line cp-l1"></div>
+                    <div class="cp-line cp-l2"></div>
+                    <div class="cp-line cp-l3"></div>
+                    <div class="cp-line cp-l4"></div>
+                    <div class="cp-bar cp-b1"></div>
+                    <div class="cp-bar cp-b2"></div>
+                    <div class="cp-bar cp-b3"></div>
+                    <div class="cp-bar cp-b4"></div>
+                  </div>
+                  <span class="radio-card-title">Black &amp; White</span>
+                </div>
+              </label>
+
+              <label class="radio-label">
+                <input type="radio" name="color_mode" value="color">
+                <div class="radio-card">
+                  <div class="color-paper color-paper-multi">
+                    <div class="cp-header"></div>
+                    <div class="cp-line cp-l1"></div>
+                    <div class="cp-line cp-l2"></div>
+                    <div class="cp-line cp-l3"></div>
+                    <div class="cp-line cp-l4"></div>
+                    <div class="cp-bar cp-b1"></div>
+                    <div class="cp-bar cp-b2"></div>
+                    <div class="cp-bar cp-b3"></div>
+                    <div class="cp-bar cp-b4"></div>
+                  </div>
+                  <span class="radio-card-title">Color</span>
+                </div>
+              </label>
+            </div>
+          </div>
+
+          </div>
+        </div>
+
+        <div class="receipt-divider">
+          <div class="hole-left"></div>
+          <div class="hole-right"></div>
+        </div>
+
+        <div style="padding: 1.5rem 1.75rem 1rem;">
+          <button class="btn-submit" id="submitBtn" type="button">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M8 3l5 5-5 5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Confirm &amp; Upload
+          </button>
+          <div id="statusMessage"></div>
+        </div>
+
+        {{ printease_badge(variant='receipt') }}
+
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock content %}
+
+{% block scripts %}
+<script type="module" src="{{ url_for('static', path='js/upload.js') }}"></script>
+{% endblock scripts %}

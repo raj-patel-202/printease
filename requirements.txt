@@ -1,0 +1,29 @@
+# Web Framework
+fastapi
+uvicorn
+python-multipart
+jinja2
+slowapi
+
+# Database
+SQLAlchemy
+asyncpg
+
+# Environment & Config
+pydantic[email]
+pydantic-settings
+python-dotenv
+
+# Security & Auth
+pwdlib[argon2]
+PyJWT
+
+# Utilities
+aiofiles
+pypdf
+razorpay
+httpx
+
+# Testing
+pytest
+pytest-asyncio

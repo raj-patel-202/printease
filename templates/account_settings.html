@@ -1,0 +1,118 @@
+{% extends "layout.html" %}
+
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', path='css/account_settings.css') }}"/>
+{% endblock %}
+
+{% block active_nav %}
+  <a href="{{ url_for('home') }}">Home</a>
+  <a href="{{ url_for('contact') }}">Contact</a>
+{% endblock %}
+
+{% block content %}
+<main class="page-wrapper dot-grid-bg">
+  <div class="settings-container">
+
+    <aside class="profile-card reveal">
+      <div class="profile-avatar-wrap">
+        <div class="profile-initials-avatar" id="profile-initials-avatar"></div>
+      </div>
+
+      <h2 class="profile-name" id="profile-username">—</h2>
+      <p class="profile-email" id="profile-email">—</p>
+
+      <div class="profile-stats">
+        <div class="stat-item">
+          <span class="stat-value" id="stat-orders">—</span>
+          <span class="stat-label">Orders</span>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-item">
+          <span class="stat-value" id="stat-member">—</span>
+          <span class="stat-label">Member Since</span>
+        </div>
+      </div>
+    </aside>
+
+    <div class="settings-panels">
+
+      <section class="settings-panel reveal">
+        <div class="panel-header">
+          <span class="panel-icon"><img src="{{ url_for('static', path='icons/edit_user.svg') }}" class="svg-icon" style="height: 34px; width: auto;"></span>
+          <div>
+            <h2 class="panel-title">Change Username</h2>
+            <p class="panel-subtitle">Update how your name appears across the platform</p>
+          </div>
+        </div>
+
+        <form id="usernameForm" novalidate>
+          <div class="form-group">
+            <label for="new_username">New Username</label>
+            <div class="input-wrap">
+              <input type="text" id="new_username" name="new_username"
+                     placeholder="e.g. john_doe" minlength="1" maxlength="50"
+                     autocomplete="username" required />
+            </div>
+            <p class="input-hint">3–50 characters. Letters, numbers, and underscores.</p>
+          </div>
+
+          <div class="form-group">
+            <label for="confirm_password">Confirm Your Password</label>
+            <div class="input-wrap">
+              <input type="password" id="confirm_password" name="confirm_password"
+                     placeholder="Enter your current password"
+                     autocomplete="current-password" required />
+            </div>
+            <p class="input-hint">We need your password to confirm this change.</p>
+          </div>
+
+          <button type="submit" class="btn-submit" id="saveUsernameBtn">
+            Save Username
+          </button>
+        </form>
+      </section>
+
+      <section class="settings-panel danger-panel reveal">
+        <div class="panel-header">
+          <span class="panel-icon"><img src="{{ url_for('static', path='icons/error_danger.svg') }}" class="svg-icon" style="height: 24px; width: auto;"></span>
+          <div>
+            <h2 class="panel-title danger-title">Delete Account</h2>
+            <p class="panel-subtitle">This action is permanent and cannot be undone</p>
+          </div>
+        </div>
+
+        <div class="danger-warning">
+          <strong><img src="{{ url_for('static', path='icons/warning.svg') }}" class="svg-icon" style="height: 1.1em; width: auto; vertical-align: text-bottom; margin-right: 4px;"> What happens when you delete your account:</strong>
+          <ul>
+            <li>Your profile, username, and email will be permanently erased.</li>
+            <li>All your orders and payment records will be deleted.</li>
+            <li>Any active print jobs may be cancelled.</li>
+            <li>You will be immediately logged out.</li>
+          </ul>
+        </div>
+
+        <form id="deleteAccountForm" novalidate>
+          <div class="form-group">
+            <label for="delete_password">Confirm Your Password</label>
+            <div class="input-wrap">
+              <input type="password" id="delete_password" name="delete_password"
+                     placeholder="Enter your password to confirm deletion"
+                     autocomplete="current-password" required />
+            </div>
+            <p class="input-hint">We need your password to permanently delete your account.</p>
+          </div>
+
+          <button type="submit" class="btn-danger" id="deleteAccountBtn">
+            Permanently Delete My Account
+          </button>
+        </form>
+      </section>
+
+    </div>
+  </div>
+</main>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', path='js/account_settings.js') }}?v=2"></script>
+{% endblock %}

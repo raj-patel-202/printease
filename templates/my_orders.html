@@ -1,0 +1,126 @@
+{% extends "layout.html" %}
+{% from "macros.html" import printease_badge %}
+
+{% block active_nav %}
+<a href="{{ url_for('home') }}">Home</a>
+<a href="{{ url_for('contact') }}">Contact</a>
+<a href="{{ url_for('my_orders') }}" class="active">My Orders</a>
+{% endblock active_nav %}
+
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', path='css/my_orders.css') }}?v=7"/>
+{% endblock styles %}
+
+{% block content %}
+<div class="orders-page dot-grid-bg">
+  <div class="orders-container">
+
+    <div class="orders-header reveal">
+      <h1>My <em>Orders</em></h1>
+      <div class="orders-header-actions">
+        <a href="{{ url_for('home') }}" class="btn-action btn-view">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+            <path d="M10 3L5 8l5 5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+          Back to Home
+        </a>
+      </div>
+    </div>
+
+    <div class="orders-filter-container" id="filter-container" style="display:none;">
+      <div class="filter-group">
+        <label>Order Status</label>
+        <div class="custom-select-wrapper" id="status-filter-wrapper">
+          <div class="custom-select-trigger">
+            <span id="status-filter-text">All Orders</span>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+          </div>
+          <div class="custom-options">
+            <span class="custom-option selected" data-value="all">All Orders</span>
+            <span class="custom-option" data-value="delivered">Delivered</span>
+            <span class="custom-option" data-value="completed">Completed</span>
+            <span class="custom-option" data-value="pending">Pending</span>
+            <span class="custom-option" data-value="cancelled">Cancelled</span>
+          </div>
+        </div>
+      </div>
+      <div class="filter-group">
+        <label>Date</label>
+        <div class="custom-select-wrapper" id="date-filter-wrapper">
+          <div class="custom-select-trigger">
+            <span id="date-filter-text">All Time</span>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+          </div>
+          <div class="custom-options">
+            <span class="custom-option selected" data-value="all">All Time</span>
+            <span class="custom-option" data-value="this_week">This Week</span>
+            <span class="custom-option" data-value="this_month">This Month</span>
+            <span class="custom-option" data-value="past_month">Past Month</span>
+            <span class="custom-option" data-value="this_year">This Year</span>
+            <span class="custom-option" data-value="last_year">Last Year</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="skeleton-loader" class="orders-list">
+      <div class="skeleton-card">
+        <div class="skeleton-block">
+          <div class="skeleton-line" style="width:22%"></div>
+          <div class="skeleton-line" style="width:62%"></div>
+        </div>
+      </div>
+      <div class="skeleton-card">
+        <div class="skeleton-block">
+          <div class="skeleton-line" style="width:22%"></div>
+          <div class="skeleton-line" style="width:50%"></div>
+        </div>
+      </div>
+      <div class="skeleton-card">
+        <div class="skeleton-block">
+          <div class="skeleton-line" style="width:22%"></div>
+          <div class="skeleton-line" style="width:55%"></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="empty-state" class="empty-state">
+      <div class="empty-icon">📭</div>
+      <h3>No orders yet</h3>
+      <p>You haven't printed any documents with us yet.</p>
+      <a href="{{ url_for('upload') }}" class="btn-action btn-pay">Start a Print Order</a>
+    </div>
+
+    <div id="orders-list" class="orders-list" style="display:none;"></div>
+    
+    <div id="orders-pagination" style="margin-top: 2rem;"></div>
+
+  </div>
+</div>
+
+<div id="status-modal" class="status-modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="status-modal-title" hidden>
+  <div class="status-modal-card">
+    <div class="status-modal-header">
+      <div>
+        <h2 id="status-modal-title">Print <span style="color: var(--accent);">Status</span></h2>
+        <p id="status-modal-subtitle">Order #—</p>
+      </div>
+      <button type="button" class="status-modal-close" id="status-modal-close" aria-label="Close">&times;</button>
+    </div>
+    <div id="status-modal-body">
+      <p class="status-modal-loading">Loading status…</p>
+    </div>
+    <div class="status-modal-footer">
+      <button type="button" class="btn-action btn-view" id="status-modal-dismiss">Close</button>
+    </div>
+  </div>
+</div>
+{% endblock content %}
+
+{% block printease_badge %}
+{{ printease_badge() }}
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', path='js/my_orders.js') }}?v=10"></script>
+{% endblock scripts %}

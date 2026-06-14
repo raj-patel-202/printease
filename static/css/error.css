@@ -1,0 +1,116 @@
+.error-page {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 24px 80px;
+}
+
+.error-card {
+  width: 100%;
+  max-width: 540px;
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 3.5rem 2.5rem;
+  text-align: center;
+  box-shadow: 0 16px 48px rgba(44, 40, 37, 0.13);
+  animation: cardUp 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+@keyframes cardUp {
+  from {
+    opacity: 0;
+    transform: translateY(24px) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.error-icon {
+  width: 72px;
+  height: 72px;
+  background: #fff5f5;
+  border: 2px solid #f7d4d4;
+  color: #d94f4f;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1.5rem;
+}
+
+.error-icon.warning {
+  background: var(--accent-light);
+  border-color: #f0cdb8;
+  color: var(--accent);
+}
+
+.error-code {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 5.5rem;
+  font-weight: 600;
+  line-height: 1;
+  color: var(--ink);
+  margin-bottom: 1rem;
+  letter-spacing: -0.02em;
+}
+
+.error-code span {
+  color: var(--accent);
+  font-style: italic;
+}
+
+.error-message {
+  font-size: 1.05rem;
+  color: var(--ink-muted);
+  margin-bottom: 2.5rem;
+  line-height: 1.65;
+  max-width: 400px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.btn-home {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--white);
+  background: var(--ink);
+  border: none;
+  border-radius: 8px;
+  padding: 13px 28px;
+  cursor: pointer;
+  letter-spacing: 0.02em;
+  text-decoration: none;
+  transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.3), 0 4px 12px rgba(44, 40, 37, 0.15);
+}
+
+.btn-home:hover {
+  background: var(--accent);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 0 rgba(0, 0, 0, 0.2), 0 8px 20px rgba(200, 96, 42, 0.25);
+}
+
+.btn-home:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.3);
+}
+
+@media (max-width: 480px) {
+  .error-card {
+    padding: 2.5rem 1.5rem;
+  }
+
+  .error-code {
+    font-size: 4.5rem;
+  }
+}

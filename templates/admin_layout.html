@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover"/>
+  <title>PrintEase — Admin {{ title }}</title>
+  <link rel="icon" type="image/svg+xml" href="{{ url_for('static', path='icons/printer.svg') }}">
+
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="{{ url_for('static', path='css/layout.css') }}"/>
+
+  <style>
+    :root {
+      --accent: #2563eb;
+      --accent-light: #eff6ff;
+      --brand: #2563eb;
+      --brand-dark: #1d4ed8;
+    }
+    
+    .logo span {
+      color: var(--accent);
+    }
+
+    @media (max-width: 768px) {
+      .section-tag {
+        font-size: 0.6rem !important;
+        padding: 3px 7px !important;
+        margin-left: 6px !important;
+      }
+
+      .nav-right .btn-ghost {
+        padding: 6px 12px;
+        font-size: 0.8rem;
+      }
+
+      .nav-right .btn-ghost img {
+        height: 15px !important;
+      }
+    }
+
+    @media (max-width: 380px) {
+      .section-tag {
+        display: none !important;
+      }
+    }
+  </style>
+
+  {% block styles %}{% endblock %}
+</head>
+<body>
+
+  <header class="header">
+    <div class="header-inner">
+      <div class="nav-left">
+        <a href="{{ url_for('admin_dashboard') }}" class="logo">
+          <img src="{{ url_for('static', path='icons/printer.svg') }}" style="height: 28px; width: auto;" class="svg-icon">
+          <div>Print<span>Ease</span></div>
+        </a>
+        <span class="section-tag" style="margin: 0; margin-left: 10px; transform: translateY(-1px); padding: 4px 10px; font-size: 0.7rem; background: var(--accent-light); color: var(--accent); border: 1px solid var(--accent);">Admin Panel</span>
+      </div>
+
+      <div class="nav-right">
+        {% block admin_nav %}{% endblock %}
+      </div>
+    </div>
+  </header>
+
+  {% block content %}{% endblock content %}
+
+  <footer class="footer">
+    <p>© 2026 PrintEase Admin.</p>
+  </footer>
+
+  <div class="toast" id="toast"></div>
+
+  <div class="modal-backdrop" id="globalModal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal-card">
+      <button class="modal-close" id="modalClose" aria-label="Close">&times;</button>
+      <div class="modal-icon error" id="modalIcon"><img src="{{ url_for('static', path='icons/error.svg') }}" class="svg-icon" style="height: 1em; width: auto;"></div>
+      <h2 class="modal-title" id="modalTitle">Something went wrong</h2>
+      <p class="modal-body" id="modalBody"></p>
+      <div class="modal-footer" id="modalFooter"></div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="pdfViewerModal" role="dialog" aria-modal="true" aria-labelledby="pdfModalTitle" style="z-index: 1200;">
+    <div class="modal-card pdf-modal-card">
+      <div class="preview-section-header" style="flex-shrink: 0; padding: 0.85rem 1.25rem; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); background: var(--bg);">
+        <div style="display: flex; align-items: center; gap: 0.6rem; min-width: 0; flex: 1;">
+          <span class="dot"></span>
+          <span class="dot"></span>
+          <span class="dot"></span>
+          <p id="pdfModalTitle" style="font-size: 0.88rem; font-weight: 600; color: var(--ink); margin: 0 0 0 0.5rem; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;"></p>
+        </div>
+        <button class="modal-close" id="pdfModalClose" aria-label="Close" style="position: static; width: 30px; height: 30px; margin-left: 1rem;">&times;</button>
+      </div>
+      <div class="pdf-zoom-bar" id="pdfModalZoomBar" style="flex-shrink: 0;" hidden>
+        <button type="button" class="pdf-zoom-btn" id="pdfModalZoomOut" aria-label="Zoom out">−</button>
+        <span class="pdf-zoom-label" id="pdfModalZoomLabel">100%</span>
+        <button type="button" class="pdf-zoom-btn" id="pdfModalZoomIn" aria-label="Zoom in">+</button>
+        <button type="button" class="pdf-zoom-btn pdf-zoom-btn-fit" id="pdfModalZoomReset" aria-label="Fit to width">Fit</button>
+      </div>
+      <div class="pdf-preview-body" id="pdfModalPreview" style="flex: 1; position: relative;">
+        <div class="pdf-preview-loading" id="pdfModalPreviewLoading">Loading preview…</div>
+        <div class="pdf-preview-pages" id="pdfModalPreviewPages" style="padding: 12px; gap: 10px;" hidden></div>
+        <div class="pdf-preview-error" id="pdfModalPreviewError" hidden>
+          <p>Preview could not be rendered on this device.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { PDFPreviewer } from '/static/js/pdf_viewer.js';
+
+    document.addEventListener('DOMContentLoaded', () => {
+      document.querySelectorAll('.reveal').forEach((el, i) => {
+        setTimeout(() => el.classList.add('visible'), 80 + i * 140);
+      });
+    });
+
+    window.showToast = function (msg, duration = 3500) {
+      const toast = document.getElementById('toast');
+      if (!toast) return;
+      toast.textContent = msg;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), duration);
+    };
+
+    (function () {
+      const backdrop = document.getElementById('globalModal');
+      const closeBtn = document.getElementById('modalClose');
+      const iconEl   = document.getElementById('modalIcon');
+      const titleEl  = document.getElementById('modalTitle');
+      const bodyEl   = document.getElementById('modalBody');
+      const footerEl = document.getElementById('modalFooter');
+
+      const ICONS = {
+        error: '<img src="/static/icons/error.svg" class="svg-icon" style="height: 1em; width: auto;">',
+        warning: '<img src="/static/icons/warning.svg" class="svg-icon" style="height: 1em; width: auto;">',
+        info: '<img src="/static/icons/info.svg" class="svg-icon" style="height: 1em; width: auto;">'
+      };
+
+      function hideModal() {
+        backdrop.classList.remove('modal-open');
+        setTimeout(() => { document.body.style.overflow = ''; }, 260);
+      }
+
+      function showModal(opts = {}) {
+        const type      = opts.type    || 'error';
+        const title     = opts.title   || 'Something went wrong';
+        const message   = opts.message || '';
+        
+        iconEl.className  = 'modal-icon ' + type;
+        iconEl.innerHTML = ICONS[type] || ICONS.error;
+        titleEl.textContent = title;
+        bodyEl.textContent  = message;
+        footerEl.innerHTML = '';
+        
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'modal-btn-primary';
+        btn.textContent = 'Dismiss';
+        btn.addEventListener('click', hideModal);
+        footerEl.appendChild(btn);
+
+        document.body.style.overflow = 'hidden';
+        backdrop.classList.add('modal-open');
+      }
+
+      closeBtn.addEventListener('click', hideModal);
+      window.showModal = showModal;
+      window.hideModal = hideModal;
+    })();
+
+    (function () {
+      const modal = document.getElementById('pdfViewerModal');
+      const closeBtn = document.getElementById('pdfModalClose');
+      const titleEl = document.getElementById('pdfModalTitle');
+
+      const pdfPreviewer = new PDFPreviewer({
+        previewBoxId: 'pdfModalPreview',
+        pagesElId: 'pdfModalPreviewPages',
+        loadingElId: 'pdfModalPreviewLoading',
+        errorElId: 'pdfModalPreviewError',
+        zoomBarId: 'pdfModalZoomBar',
+        zoomLabelId: 'pdfModalZoomLabel',
+        zoomInId: 'pdfModalZoomIn',
+        zoomOutId: 'pdfModalZoomOut',
+        resetId: 'pdfModalZoomReset'
+      });
+
+      function hidePdfModal() {
+        modal.classList.remove('modal-open');
+        pdfPreviewer.cleanup();
+        document.body.style.overflow = '';
+      }
+
+      function showPdfModal(fileObj, filename) {
+        titleEl.textContent = filename || 'document.pdf';
+        document.body.style.overflow = 'hidden';
+        modal.classList.add('modal-open');
+        pdfPreviewer.renderPdfPreview(fileObj);
+      }
+
+      closeBtn.addEventListener('click', hidePdfModal);
+      window.viewPdf = showPdfModal;
+    })();
+  </script>
+
+  {% block scripts %}{% endblock %}
+</body>
+</html>

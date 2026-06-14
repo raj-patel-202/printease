@@ -1,0 +1,19 @@
+.env
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+env/
+venv/
+blog.db
+resource/uploads/
+.idea/
+.vscode/
+
+# Environment files
+.env.local
+.env.*
+
+# Databases
+*.db
+*.sqlite3

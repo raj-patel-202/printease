@@ -1,0 +1,236 @@
+.home-page {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  background-attachment: local;
+  overflow-x: hidden;
+}
+
+.hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 72px 24px 80px;
+  max-width: 700px;
+  margin: 0 auto;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.hero-badge {
+  display: inline-block;
+  font-family: 'Playfair Display', serif;
+  font-size: 0.9rem;
+  font-weight: 600;
+  font-style: italic;
+  letter-spacing: 0.05em;
+  color: var(--accent);
+  background: var(--accent-l);
+  border: 1px solid #f0cdb8;
+  padding: 6px 20px;
+  border-radius: 999px;
+  margin-bottom: 28px;
+}
+
+.hero-title {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(2.4rem, 5vw, 3.4rem);
+  font-weight: 600;
+  line-height: 1.18;
+  color: var(--ink);
+  margin-bottom: 20px;
+}
+
+.hero-title em {
+  font-style: italic;
+  color: var(--accent);
+}
+
+.hero-sub {
+  font-size: 1.05rem;
+  font-weight: 300;
+  color: var(--muted);
+  line-height: 1.7;
+  max-width: 520px;
+  margin-bottom: 44px;
+}
+
+.upload-card {
+  width: 100%;
+  max-width: 480px;
+  background: var(--white);
+  border: 2px dashed var(--border);
+  border-radius: var(--radius);
+  padding: 40px 32px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  box-shadow: 0 12px 32px rgba(44, 40, 37, 0.06);
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.upload-card:hover,
+.upload-card.drag-over {
+  border-color: var(--accent);
+  background: #fffdfc;
+  box-shadow: 0 16px 48px rgba(44, 40, 37, 0.13);
+}
+
+.upload-icon {
+  font-size: 2rem;
+}
+
+.upload-label {
+  font-weight: 500;
+  font-size: 1rem;
+  color: var(--ink);
+}
+
+.upload-hint {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.btn-upload {
+  margin-top: 12px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--white);
+  background: var(--accent);
+  border: none;
+  border-radius: 8px;
+  padding: 12px 28px;
+  cursor: pointer;
+  letter-spacing: 0.01em;
+  transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.2), 0 4px 12px rgba(200, 96, 42, 0.2);
+}
+
+.btn-upload:hover {
+  background: #b55524;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 0 rgba(0, 0, 0, 0.15), 0 8px 20px rgba(200, 96, 42, 0.3);
+}
+
+.btn-upload:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.2);
+}
+
+.upload-note {
+  margin-top: 14px;
+  font-size: 0.85rem;
+  color: var(--muted);
+  min-height: 20px;
+}
+
+.features {
+  padding: 20px 24px 80px;
+}
+
+.features-grid {
+  max-width: 960px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 28px;
+}
+
+.feature-card {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 28px 24px;
+  box-shadow: 0 8px 24px rgba(44, 40, 37, 0.05);
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.feature-card:hover {
+  box-shadow: 0 16px 40px rgba(44, 40, 37, 0.1);
+  transform: translateY(-4px);
+  border-color: #d1c8bb;
+}
+
+.feature-icon {
+  font-size: 1.6rem;
+  margin-bottom: 12px;
+}
+
+.feature-card h3 {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: var(--ink);
+}
+
+.feature-card p {
+  font-size: 0.88rem;
+  color: var(--muted);
+  line-height: 1.65;
+}
+
+@media (max-width: 900px) {
+  .features-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+}
+
+@media (max-width: 768px) {
+  .features-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .features {
+    padding: 16px 16px 60px;
+  }
+
+  .upload-card {
+    max-width: 100%;
+    padding: 32px 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .hero {
+    padding: 44px 16px 52px;
+  }
+
+  .hero-title {
+    font-size: clamp(1.9rem, 8vw, 2.6rem);
+  }
+
+  .hero-sub {
+    font-size: 0.97rem;
+    margin-bottom: 32px;
+  }
+
+  .hero-badge {
+    font-size: 0.82rem;
+    padding: 5px 16px;
+    margin-bottom: 20px;
+  }
+
+  .upload-card {
+    padding: 28px 16px;
+    gap: 8px;
+  }
+
+  .btn-upload {
+    padding: 11px 22px;
+    font-size: 0.9rem;
+    width: 100%;
+    justify-content: center;
+  }
+
+  .features {
+    padding: 12px 12px 48px;
+  }
+}

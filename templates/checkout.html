@@ -1,0 +1,184 @@
+{% extends "layout.html" %}
+{% from "macros.html" import printease_badge %}
+
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', path='css/checkout.css') }}?v=4"/>
+{% endblock styles %}
+
+{% block active_nav %}
+  <a href="{{ url_for('home') }}">Home</a>
+  <a href="{{ url_for('contact') }}">Contact</a>
+{% endblock active_nav %}
+
+{% block content %}
+<div class="checkout-page dot-grid-bg">
+  <div class="checkout-container">
+
+    <div class="checkout-header">
+      <h1>Order <em>Summary</em></h1>
+      <p>Review your print configuration before paying.</p>
+    </div>
+
+    <div class="checkout-card">
+
+      <div class="skeleton-loader" id="skeleton-loader">
+        <div class="skeleton-line" style="width: 35%; height: 12px;"></div>
+        <div class="skeleton-line" style="width: 65%;"></div>
+        <div class="skeleton-line" style="width: 55%;"></div>
+        <div class="skeleton-line" style="width: 75%; margin-top: 0.5rem;"></div>
+        <div class="skeleton-line" style="width: 45%;"></div>
+      </div>
+
+      <div id="checkout-content" style="display: none;">
+
+        <div class="section-eyebrow">Print Configuration</div>
+
+        <div class="config-grid">
+          <div class="config-item">
+            <div class="config-icon-wrap">
+              <img src="{{ url_for('static', path='icons/page.svg') }}" alt="Pages" style="height: 28px; max-width: 34px; object-fit: contain;" class="svg-icon">
+            </div>
+            <div class="config-text">
+              <span class="config-label">Pages / Copy</span>
+              <span class="config-value" id="c-pages">—</span>
+            </div>
+          </div>
+
+          <div class="config-item">
+            <div class="config-icon-wrap">
+              <img src="{{ url_for('static', path='icons/copy.svg') }}" alt="Copies" style="height: 28px; max-width: 34px; object-fit: contain;" class="svg-icon">
+            </div>
+            <div class="config-text">
+              <span class="config-label">Copies</span>
+              <span class="config-value" id="c-copies">—</span>
+            </div>
+          </div>
+
+          <div class="config-item">
+            <div class="config-icon-wrap">
+              <img src="{{ url_for('static', path='icons/paper_size.svg') }}" alt="Paper Size" style="height: 28px; max-width: 34px; object-fit: contain;" class="svg-icon">
+            </div>
+            <div class="config-text">
+              <span class="config-label">Paper Size</span>
+              <span class="config-value" id="c-paper">—</span>
+            </div>
+          </div>
+
+          <div class="config-item">
+            <div class="config-icon-wrap">
+              <img src="{{ url_for('static', path='icons/orientation.svg') }}" alt="Orientation" style="height: 28px; max-width: 34px; object-fit: contain;" class="svg-icon">
+            </div>
+            <div class="config-text">
+              <span class="config-label">Orientation</span>
+              <span class="config-value" id="c-orientation">—</span>
+            </div>
+          </div>
+
+          <div class="config-item">
+            <div class="config-icon-wrap">
+              <img src="{{ url_for('static', path='icons/sides.svg') }}" alt="Sides" style="height: 28px; max-width: 34px; object-fit: contain;" class="svg-icon">
+            </div>
+            <div class="config-text">
+              <span class="config-label">Sides</span>
+              <span class="config-value" id="c-sides">—</span>
+            </div>
+          </div>
+
+          <div class="config-item">
+            <div class="config-icon-wrap">
+              <img src="{{ url_for('static', path='icons/color.svg') }}" alt="Color Mode" style="height: 28px; max-width: 34px; object-fit: contain;" class="svg-icon">
+            </div>
+            <div class="config-text">
+              <span class="config-label">Color Mode</span>
+              <span class="config-value" id="c-color">—</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="checkout-divider-simple"></div>
+
+        <div class="payment-section">
+          <div class="total-block">
+            <div class="total-label-row">
+              <span class="total-label">Total Amount</span>
+              <button type="button" id="show-breakup-btn" class="breakup-trigger-btn" aria-label="View Price Breakup" title="View Price Breakup">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+              </button>
+            </div>
+            <div class="total-amount">₹<span id="c-cost">0.00</span></div>
+          </div>
+
+          <button id="rzp-button" class="btn-pay">
+            <span class="btn-pay-icon">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="1" y="5" width="14" height="9" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M4 5V4a4 4 0 0 1 8 0v1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="8" cy="9.5" r="1.2" fill="currentColor"/></svg>
+            </span>
+            Pay Securely
+          </button>
+
+          <button id="cancel-button" class="btn-cancel">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 2l10 10M12 2L2 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+            Cancel Order
+          </button>
+
+          <div class="secure-badge">
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 1L1.5 3v3c0 2.8 2 5.1 4.5 5.7C8.5 11.1 10.5 8.8 10.5 6V3L6 1Z" stroke="currentColor" stroke-width="1.2"/></svg>
+            Payments secured by Razorpay
+          </div>
+        </div>
+
+        <div class="breakup-modal-backdrop" id="breakupModal" role="dialog" aria-modal="true" aria-labelledby="breakupModalTitle">
+          <div class="breakup-modal-card">
+            <div class="breakup-modal-header">
+              <h3 id="breakupModalTitle">Price Breakup</h3>
+              <button type="button" class="breakup-modal-close" id="close-breakup-btn" aria-label="Close modal">&times;</button>
+            </div>
+            
+            <div class="breakup-modal-body">
+              <div class="price-breakup">
+                <div class="price-row">
+                  <span class="price-label" id="c-label-price-per-page">Price per page</span>
+                  <span class="price-value" id="c-price-per-page">₹0.00</span>
+                </div>
+                <div class="price-row">
+                  <div class="price-info">
+                    <span class="price-label">Total pages printed</span>
+                    <span class="price-sub" id="c-total-pages-printed-sub">—</span>
+                  </div>
+                  <span class="price-value" id="c-total-pages-printed">—</span>
+                </div>
+                <div class="price-row">
+                  <span class="price-label">Base print cost</span>
+                  <span class="price-value" id="c-base-print-cost">₹0.00</span>
+                </div>
+                <div class="price-row" id="c-row-discount" style="display: none;">
+                  <span class="price-label" id="c-discount-label-text">Double-sided discount (20%)</span>
+                  <span class="price-value discount-val" id="c-discount-val">-₹0.00</span>
+                </div>
+                <div class="price-row grand-total-row">
+                  <span class="price-label">Grand total</span>
+                  <span class="price-value" id="c-grand-total">₹0.00</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      {{ printease_badge(variant='receipt', show_tagline=false) }}
+
+    </div>
+
+  </div>
+</div>
+{% endblock content %}
+
+{% block scripts %}
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+
+<script>
+  window.razorpay_api_key = "{{ razorpay_api_key }}";
+</script>
+
+<script src="{{ url_for('static', path='js/checkout.js') }}?v=3"></script>
+{% endblock scripts %}
