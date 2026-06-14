@@ -1,5 +1,8 @@
 from datetime import timedelta
 from typing import Annotated
+import asyncio
+import shutil
+from pathlib import Path
 
 from fastapi import APIRouter, Depends, HTTPException, Response, status, Request
 from utils.rate_limiter import limiter
@@ -170,6 +173,15 @@ async def delete_user(request: Request, user_id: int, body: DeleteAccountRequest
     await db.delete(user)
     try:
         await db.commit()
+        
+        # Delete user's PDF files
+        user_upload_dir = Path("resource/uploads") / str(user_id)
+        if await asyncio.to_thread(user_upload_dir.exists):
+            try:
+                await asyncio.to_thread(shutil.rmtree, user_upload_dir)
+            except Exception:
+                pass
+                
         return Response(status_code=status.HTTP_204_NO_CONTENT)
     except IntegrityError:
         await db.rollback()
