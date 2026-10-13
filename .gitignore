@@ -1,5 +1,4 @@
 .env
-server/.env
 __pycache__/
 *.py[cod]
 *$py.class
@@ -7,7 +6,6 @@ __pycache__/
 env/
 venv/
 blog.db
-server/resource/uploads/
 resource/uploads/
 .idea/
 .vscode/
@@ -15,9 +13,7 @@ resource/uploads/
 # Environment files
 .env.local
 .env.*
-server/.env.*
 !.env.example
-!server/.env.example
 
 # Databases
 *.db
