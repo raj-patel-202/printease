@@ -318,7 +318,7 @@
       </div>
       <div class="printer-controls" style="background: var(--white); padding: 0.85rem 1.2rem; border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 4px 12px rgba(0,0,0,0.03); display: flex; align-items: center; gap: 1.5rem;">
         <div>
-          <span style="display: block; font-size: 0.7rem; color: var(--ink-muted); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; margin-bottom: 0.25rem;">Print Dispatcher</span>
+          <span style="display: block; font-size: 0.7rem; color: var(--ink-muted); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; margin-bottom: 0.25rem;">Print Agent</span>
           <div style="font-weight: 500; font-size: 0.95rem; display: flex; align-items: center; gap: 0.4rem;">
             <span id="printerStatusDot" style="width: 8px; height: 8px; border-radius: 50%; background: #ccc;"></span>
             <span id="printerStatusText">Loading...</span>
@@ -412,59 +412,65 @@
     }
   }
 
-  let printerIsRunning = true;
+  let printerIsRunning = false;
+  let lastPrinterData = { is_running: false, agent_online: false };
 
   async function fetchPrinterStatus() {
     try {
       const res = await fetch('/api/admin/printer/status');
       if (res.ok) {
-        const data = await res.json();
-        updatePrinterUI(data.is_running);
+        updatePrinterUI(await res.json());
       }
     } catch (e) {
       console.error('Failed to fetch printer status', e);
     }
   }
 
-  function updatePrinterUI(isRunning) {
-    printerIsRunning = isRunning;
+  function updatePrinterUI(data) {
+    lastPrinterData = data;
+    printerIsRunning = data.is_running;
     const dot = document.getElementById('printerStatusDot');
     const text = document.getElementById('printerStatusText');
     const btn = document.getElementById('printerToggleBtn');
-    
+    const agent = data.agent_online
+      ? 'Agent online' + (data.agent_printer ? ' (' + data.agent_printer + ')' : '')
+      : 'Agent offline';
+
     btn.disabled = false;
-    
-    if (isRunning) {
+
+    if (data.is_running && data.agent_online) {
       dot.style.background = '#10b981';
-      text.textContent = 'Active (Sending)';
-      btn.textContent = 'Pause Dispatcher';
-      btn.className = 'btn-action-secondary';
+      text.textContent = data.current_order_id ? 'Printing order #' + data.current_order_id : 'Receiving jobs - ' + agent;
+    } else if (data.is_running) {
+      dot.style.background = '#f59e0b';
+      text.textContent = 'Started - waiting for agent';
     } else {
       dot.style.background = '#ef4444';
-      text.textContent = 'Paused (Halted)';
-      btn.textContent = 'Resume Dispatcher';
-      btn.className = 'btn-action-primary';
+      text.textContent = 'Stopped - ' + agent;
     }
+
+    btn.textContent = data.is_running ? 'Stop receiving jobs' : 'Start receiving jobs';
+    btn.className = data.is_running ? 'btn-action-secondary' : 'btn-action-primary';
   }
 
   async function togglePrinter() {
     const btn = document.getElementById('printerToggleBtn');
     btn.disabled = true;
     btn.textContent = 'Updating...';
-    
+
     const endpoint = printerIsRunning ? '/api/admin/printer/pause' : '/api/admin/printer/resume';
     try {
       const res = await fetch(endpoint, { method: 'POST' });
       if (res.ok) {
         await fetchPrinterStatus();
-        window.showToast(printerIsRunning ? 'Printer resumed' : 'Printer paused');
+        window.showToast(printerIsRunning ? 'Started - jobs will go to the printer' : 'Stopped - no new jobs will be sent');
       } else {
         throw new Error('Failed to toggle printer');
       }
     } catch (e) {
       window.showToast('Error: ' + e.message);
       btn.disabled = false;
-      updatePrinterUI(printerIsRunning);
+      updatePrinterUI(lastPrinterData);
     }
   }
 
@@ -632,6 +638,7 @@
     fetchActiveOrders();
     fetchFailedPayments();
     fetchPrinterStatus();
+    setInterval(fetchPrinterStatus, 5000);
   });
 </script>
 {% endblock %}

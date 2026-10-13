@@ -1,32 +1,57 @@
 # PrintEase (Smart Printing Service)
 
-PrintEase is a modern, web-based remote printing solution built with FastAPI. It allows users to securely upload documents, configure print settings (copies, color, paper size), process payments via Razorpay, and automatically route the jobs to a remotely connected physical printer.
+PrintEase is a modern, web-based remote printing solution built with FastAPI. It allows users to securely upload documents, configure print settings (copies, color mode, paper size, duplex), process payments via Razorpay, and automatically route jobs to a remotely connected physical printer via a standalone Windows agent.
+
+---
 
 ## 🏗 Architecture Overview
 
-The repository is deliberately divided into two distinct components:
+The system is designed with a decoupled, pull-based architecture:
 
-1. **The Server (Web Backend):** The entirety of this repository (**excluding** the `printer_pc` directory) acts as the central server. It handles user authentication, file uploads, secure checkout (Razorpay), database management (PostgreSQL), and the API that orchestrates the print queue.
-2. **The Printer Client (`printer_pc/`):** **IMPORTANT:** This directory contains the client code meant to be executed on the physical, remote Windows machine directly connected to the printer. This directory operates independently and must be kept logically and physically separate from the main server deployment.
+```
+┌────────────────────────┐                   ┌──────────────────────────────────┐
+│   PrintEase Server     │◄─── Outbound ─────│ Windows Printer PC               │
+│ (FastAPI + PostgreSQL) │     Polling (HTTP)│ (Standalone PrintEaseAgent.exe)  │
+└────────────────────────┘                   └──────────────────────────────────┘
+            ▲                                                 │
+            │ Manage Queue / Start / Stop                     ▼
+┌────────────────────────┐                             ┌──────────────┐
+│    Admin Dashboard     │                             │ Local Printer│
+└────────────────────────┘                             └──────────────┘
+```
+
+1. **Central Server (Web Backend):** Handles user authentication, document validation, payment processing (Razorpay), database operations (PostgreSQL), and orchestrates the print queue.
+2. **Printer Client (`printer_pc/`):** A standalone Windows agent (`PrintEaseAgent.exe`) with a single configuration file (`agent_config.json`). The agent connects **outbound** to the central server to pull print jobs. **No Python setup, no complex dependencies, and no inbound ports or Tailscale VPN tunnels are required on the printer PC.**
+3. **Admin Dashboard:** Provides real-time visibility into the printer agent's connection status, current jobs, and gives shop administrators one-click remote control to start or pause the printing service.
+
+---
 
 ## ✨ Features
 
-- **User Authentication:** Secure registration and login using Argon2 password hashing and JWT cookies.
-- **File Upload & Validation:** Secure PDF uploads with strict file size, page counting, and format validation.
-- **Dynamic Cost Calculation:** Calculates print costs based on page count, color mode (B&W/Color), side mode (single/double-sided), and applies automated discounts.
-- **Payment Integration:** Integrated with Razorpay for secure checkout and refunds.
-- **Admin Dashboard:** Administrative controls for monitoring the print queue, retrying failed jobs, marking deliveries, and pausing/resuming the print dispatcher.
-- **Print Dispatcher:** Automatically dispatches queued, paid jobs to the remote `printer_pc` client for physical printing.
+- **User Authentication:** Secure registration and login using Argon2 password hashing and HTTP-only JWT cookies.
+- **Document Upload & Validation:** Secure PDF uploads with strict file size, page counting, and format validation.
+- **Dynamic Cost Calculation:** Automatic cost computation based on page count, color mode (B&W / Color), side mode (single / double-sided), and discounts.
+- **Payment Gateway:** Secure checkout and webhook processing via Razorpay.
+- **Standalone Windows Print Client:** A single pre-compiled `.exe` file designed for zero-friction setup by printer operators.
+- **Outbound Pull Architecture:** The agent polls the server for jobs (`GET /api/agent/next`), downloading files and reporting results directly. Works behind any standard router/firewall without port forwarding or VPNs.
+- **Admin Dashboard & Remote Controls:**
+  - Real-time agent status monitor (Agent Online / Offline, detected printer hardware, active print job ID).
+  - One-click Start / Stop button to pause or resume print job dispatching without accessing the physical printer PC.
+  - Job retry mechanisms, PDF previews, and delivery marking with automated disk cleanup.
+- **Windows Startup Support:** Can be configured to automatically launch on Windows boot for hands-off operation.
+
+---
 
 ## 🚀 Getting Started (Server)
 
 ### Prerequisites
-- Docker and Docker Compose
-- Python 3.13 (for local development)
+
+- [Docker](https://www.docker.com/) and [Docker Compose](https://docs.docker.com/compose/)
+- Python 3.13 (if running locally without Docker)
 
 ### Environment Setup
 
-Create a `.env` file in the root directory and add the necessary configuration:
+Create a `.env` file in the root directory:
 
 ```env
 SECRET_KEY=your_secret_key_here
@@ -43,67 +68,134 @@ RAZORPAY_WEBHOOK_SECRET=your_webhook_secret
 
 WEB3FORMS_ACCESS_KEY=your_web3forms_key
 CURRENCY=INR
-PRINTER_PC_TAILSCALE_URL=http://your_tailscale_ip:8001
+
+# Secret token used by the printer PC agent to authenticate against the server
+AGENT_TOKEN=your_secure_agent_token_here
 ```
 
 ### Running with Docker
 
-The easiest way to run the server is using Docker Compose. This will spin up both the FastAPI application and the PostgreSQL database.
+Start the FastAPI application and PostgreSQL database with Docker Compose:
 
 ```bash
-docker-compose up --build -d
+docker compose up --build -d
 ```
-The server will be accessible at `http://localhost:8000`.
 
-### Creating an Admin Profile
+The web service will be accessible at `http://localhost:8000`.
 
-To access the admin dashboard, you need an administrative account. Run the `create_admin.py` script provided in the repository to generate one:
+### Creating an Admin Account
+
+To access the admin dashboard, create an administrator profile:
 
 ```bash
+# If running via Docker
+docker compose exec web python create_admin.py
+
 # If running locally
 python create_admin.py
-
-# If running via Docker
-docker exec -it printease_web python create_admin.py
 ```
-You will be prompted to enter an admin email and a secure password.
+
+Follow the prompts to enter your admin email and password.
+
+---
 
 ## 🖨 Setting up the Printer Client (`printer_pc`)
 
-> **Note:** The `printer_pc` folder must be moved to the Windows computer directly connected to your physical printer.
+The client setup is streamlined for printer operators: **one `.exe` file and one `.json` config file.** No Python installation or command-line experience is required.
 
-Navigate to the `printer_pc` directory on the target machine and set up the environment:
+### Step 1: Copy Client Files to the Printer PC
 
-```bash
-cd printer_pc
-python -m venv venv
-venv\Scripts\activate
-pip install -r requirements.txt
+Copy the contents of the `printer_pc/dist` folder to the Windows computer connected to your physical printer:
+- `PrintEaseAgent.exe`
+- `agent_config.json`
+
+*(A template `agent_config.example.json` is also provided for reference.)*
+
+### Step 2: Configure Server Connection
+
+Open `agent_config.json` in Notepad or any text editor:
+
+```json
+{
+  "server_url": "https://your-printease-server.com",
+  "agent_token": "your_secure_agent_token_here"
+}
 ```
 
-Run the printer client script:
-```bash
-python main.py
-```
+- **`server_url`**: The URL where your PrintEase server is hosted (e.g., `http://localhost:8000` for local testing or `https://printease.yourdomain.com` for production).
+- **`agent_token`**: Must match the `AGENT_TOKEN` configured in the server's `.env` file.
 
-### Secure Communication via Tailscale
+### Step 3: Run the Agent
 
-To ensure that print jobs and metadata are transferred securely between your central server and the remote Printer PC, it is highly recommended to use **Tailscale** to create a secure, encrypted peer-to-peer network.
+Double-click `PrintEaseAgent.exe`.
 
-1. Install [Tailscale](https://tailscale.com/) on both the server and the Windows Printer PC.
-2. Authenticate both devices onto the same Tailnet.
-3. Retrieve the Tailscale IP address of the Printer PC.
-4. Set the `PRINTER_PC_TAILSCALE_URL` environment variable on your server to point to the Printer PC's Tailscale IP and port (e.g., `http://100.x.y.z:8001`). 
+- The agent automatically detects the default printer configured in Windows.
+- It begins polling your hosted PrintEase server for pending print jobs.
+- When an order is received, it downloads the PDF, sends it to the printer with the user's selected print options (copies, color, duplex, orientation), and reports the status back to the server.
 
-This guarantees that the printer's API is not exposed to the public internet, and all traffic remains encrypted.
+---
+
+## 🔄 Run Automatically on Windows Startup
+
+To ensure printing continues seamlessly even if the printer computer restarts:
+
+1. Press <kbd>Win</kbd> + <kbd>R</kbd> to open the **Run** dialog.
+2. Type `shell:startup` and press **Enter** (this opens your user's Startup folder).
+3. Right-click inside the folder, select **New > Shortcut**.
+4. Browse and select `PrintEaseAgent.exe` from your client directory.
+5. Click **Next** and **Finish**.
+
+Now, whenever the printer PC turns on or reboots, the PrintEase agent will launch automatically in the background.
+
+---
+
+## 🎛 Managing Printing via Admin Dashboard
+
+Printer operators and administrators can control the entire printing process through the web dashboard without interacting with the physical computer:
+
+1. Log in to `/admin/dashboard` using your admin credentials.
+2. In the top header, inspect the **Print Agent** status widget:
+   - 🟢 **Receiving jobs - Agent online (Printer Name)**: The agent is connected and actively processing the queue.
+   - 🟡 **Started - waiting for agent**: The queue is enabled, waiting for the agent to poll.
+   - 🔴 **Stopped - Agent offline / online**: Printing is paused or the agent is disconnected.
+3. Use the toggle button to manage operation:
+   - Click **"Stop receiving jobs"** to temporarily pause dispatching (e.g., when refilling paper, changing toner, or taking a break).
+   - Click **"Start receiving jobs"** to resume dispatching pending orders.
+4. From the dashboard table, you can also:
+   - Monitor live printing progress (`pending` → `printing` → `completed`).
+   - Retry failed print jobs with a single click.
+   - View/download uploaded PDFs.
+   - Mark orders as delivered (which securely deletes the PDF from server disk).
+
+---
 
 ## 📂 Project Structure
 
-- `authentication/` - JWT auth and password hashing.
-- `models/` - SQLAlchemy database models.
-- `routers/` - FastAPI endpoints grouped by domain (users, orders, payments, admin).
-- `schemas/` - Pydantic schemas for request/response validation.
-- `services/` - Core business logic and payment integrations.
-- `static/` & `templates/` - Frontend assets and Jinja2 templates.
-- `utils/` - Helper functions, rate limiting, validators, and queue management.
-- `printer_pc/` - The remote client to be deployed on the printer-connected PC.
+```
+printease/
+├── authentication/             # JWT authentication & Argon2 password hashing
+├── models/                     # SQLAlchemy models and database connection
+├── printer_pc/
+│   └── dist/                   # Standalone printer client files
+│       ├── PrintEaseAgent.exe  # Compiled single-file Windows print agent
+│       ├── agent_config.json   # Server URL and agent authentication token
+│       └── agent_config.example.json # Reference configuration template
+├── routers/
+│   ├── admin.py                # Admin dashboard & printer pause/resume endpoints
+│   ├── agent.py                # Agent polling, file retrieval & result APIs
+│   ├── orders.py               # Order creation & upload endpoints
+│   ├── payments.py             # Razorpay checkout & webhook handlers
+│   └── users.py                # User registration & profile management
+├── schemas/                    # Pydantic validation schemas
+├── services/
+│   ├── payment_service.py      # Razorpay payment verification & refunds
+│   └── print_dispatcher.py     # Print queue dispatcher & timeout reaper
+├── static/                     # CSS, JavaScript & icons
+├── templates/                  # Jinja2 HTML templates (Admin dashboard, user portal)
+├── utils/                      # Rate limiter, cost calculators, validators
+├── config.py                   # Pydantic application settings
+├── create_admin.py             # CLI script to bootstrap admin users
+├── docker-compose.yml          # Production Docker Compose orchestration
+├── Dockerfile                  # FastAPI application Docker container
+└── requirements.txt            # Python server dependencies
+```

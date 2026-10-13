@@ -5,6 +5,7 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",
+        extra="ignore",
     )
 
     database_url: str
@@ -16,7 +17,10 @@ class Settings(BaseSettings):
     razorpay_timeout_seconds: int = 30
     web3forms_access_key: str
 
-    printer_pc_tailscale_url: str
+    # Printer agent (printer_pc) auth + timing. No inbound connection to the printer PC is needed.
+    agent_token: SecretStr
+    agent_online_seconds: int = 20          # agent counts as "online" if it polled this recently
+    print_job_timeout_minutes: int = 30     # a job stuck in "printing" longer than this is marked failed
     secret_key: SecretStr
     algorithm: str = "HS256"
     access_token_expire_minutes: int = 30

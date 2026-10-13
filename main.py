@@ -15,17 +15,21 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from config import settings
 from models.database import DBSession, engine, Base
-from routers import orders, payments, users, admin
+from routers import orders, payments, users, admin, agent
 from utils.rate_limiter import limiter
 
 import asyncio
+import logging
 from services.print_dispatcher import dispatcher
+
+logging.basicConfig(level=logging.INFO)
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
     dispatcher_task = asyncio.create_task(dispatcher.run())
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+    await dispatcher.recover_on_startup()
     yield
     dispatcher.is_running = False
     dispatcher_task.cancel()
@@ -49,6 +53,7 @@ app.include_router(users.router)
 app.include_router(orders.router)
 app.include_router(payments.router)
 app.include_router(admin.router)
+app.include_router(agent.router)
 
 @app.get("/api/health", tags=["health"])
 async def health_check(db: DBSession):

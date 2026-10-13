@@ -6,8 +6,9 @@ jinja2
 slowapi
 
 # Database
-SQLAlchemy
+SQLAlchemy[asyncio]
 asyncpg
+greenlet
 
 # Environment & Config
 pydantic[email]

@@ -212,16 +212,19 @@ from services.print_dispatcher import dispatcher
 @router.post("/printer/pause")
 async def pause_printer(request: Request, current_admin: CurrentAdmin):
     dispatcher.is_running = False
-    return {"message": "Print dispatcher paused"}
+    return {"message": "Stopped handing out print jobs"}
 
 @router.post("/printer/resume")
 async def resume_printer(request: Request, current_admin: CurrentAdmin):
     dispatcher.is_running = True
-    return {"message": "Print dispatcher resumed"}
+    return {"message": "Started handing out print jobs"}
 
 @router.get("/printer/status")
 async def printer_status(current_admin: CurrentAdmin):
     return {
         "is_running": dispatcher.is_running,
-        "status": "active" if dispatcher.is_running else "paused"
+        "status": "active" if dispatcher.is_running else "paused",
+        "agent_online": dispatcher.agent_online,
+        "agent_printer": dispatcher.agent_printer,
+        "current_order_id": dispatcher.current["order_id"] if dispatcher.current else None,
     }
