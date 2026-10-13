@@ -17,6 +17,10 @@ resource/uploads/
 .env.*
 server/.env.*
 
+# Printer PC agent configuration
+agent_config.json
+printer-pc/agent_config.json
+
 # Databases
 *.db
 *.sqlite3

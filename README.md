@@ -31,8 +31,7 @@ printease/
 │
 ├── printer-pc/       # Client application for the printer machine
 │   ├── PrintEaseAgent.exe          # Pre-compiled executable (ready to run)
-│   ├── agent_config.json          # Configuration file (server URL & token)
-│   └── agent_config.example.json  # Example configuration template
+│   └── agent_config.example.json  # Configuration template
 │
 └── README.md
 ```
@@ -45,12 +44,13 @@ This runs on the Windows computer physically connected to the printer. **No Pyth
 
 ### Files inside `printer-pc/`:
 - `PrintEaseAgent.exe`: Standalone program that listens for print jobs and sends them to your printer.
-- `agent_config.json`: Config file pointing to your hosted server.
+- `agent_config.example.json`: Example configuration template.
 
 ### How to use:
 
 1. **Configure the connection:**
-   Open `agent_config.json` in Notepad:
+   - Copy or rename `agent_config.example.json` to `agent_config.json`.
+   - Open `agent_config.json` in Notepad:
    ```json
    {
      "server_url": "http://localhost:8000",
