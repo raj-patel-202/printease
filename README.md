@@ -27,11 +27,15 @@ printease/
 │   ├── Dockerfile
 │   ├── docker-compose.yml
 │   ├── requirements.txt
+│   ├── .env.example
 │   └── main.py
 │
 ├── printer-pc/       # Client application for the printer machine
 │   ├── PrintEaseAgent.exe          # Pre-compiled executable (ready to run)
-│   └── agent_config.example.json  # Configuration template
+│   └── agent_config.json          # Configuration file (server URL & token)
+│
+├── docs/             # Documentation assets
+│   └── system_tray.png
 │
 └── README.md
 ```
@@ -40,17 +44,16 @@ printease/
 
 ## 1. Printer PC Setup (`printer-pc/`)
 
-This runs on the Windows computer physically connected to the printer. **No Python installation or command-line knowledge is required.**
+This runs on the Windows computer physically connected to the printer.
 
 ### Files inside `printer-pc/`:
 - `PrintEaseAgent.exe`: Standalone program that listens for print jobs and sends them to your printer.
-- `agent_config.example.json`: Example configuration template.
+- `agent_config.json`: Configuration file for server connection.
 
 ### How to use:
 
 1. **Configure the connection:**
-   - Copy or rename `agent_config.example.json` to `agent_config.json`.
-   - Open `agent_config.json` in Notepad:
+   Open `agent_config.json` in Notepad (right-click and choose **Open with > Notepad**):
    ```json
    {
      "server_url": "http://localhost:8000",
@@ -66,13 +69,14 @@ This runs on the Windows computer physically connected to the printer. **No Pyth
 
 3. **Select your printer:**
    - Right-click the PrintEase icon in the System Tray.
-   - Click **Select Printer** and choose your printer from the list of installed Windows printers.
+   - Hover over **Printer** and choose your printer from the list of installed Windows printers.
    - The app will now automatically poll the server for pending jobs and print them as they arrive.
 
-4. **(Optional) Run automatically on Windows startup:**
-   If you want the program to start whenever the PC boots up:
-   - Press `Win + R`, type `shell:startup`, and press Enter.
-   - Create a shortcut to `PrintEaseAgent.exe` inside that folder.
+4. **Run automatically on Windows startup:**
+   - Right-click the PrintEase icon in the System Tray and click **Start with Windows** to toggle it on (a checkmark `✓` will appear).
+   - The program will now start automatically whenever Windows boots up.
+
+![PrintEase System Tray Menu](docs/system_tray.png)
 
 ---
 
@@ -86,27 +90,14 @@ The server handles user logins, file uploads, payments, and manages the print qu
 
 ### Configuration:
 
-Create a `.env` file inside the `server/` folder:
+Create a `.env` file inside the `server/` folder by copying `server/.env.example`:
 
-```env
-SECRET_KEY=your_secret_key
-COOKIE_SECURE=False
-
-POSTGRES_USER=printeaseadmin
-POSTGRES_PASSWORD=your_postgres_password
-POSTGRES_DB=printease
-DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
-
-RAZORPAY_API_KEY=your_razorpay_key
-RAZORPAY_API_SECRET=your_razorpay_secret
-RAZORPAY_WEBHOOK_SECRET=your_razorpay_webhook_secret
-
-WEB3FORMS_ACCESS_KEY=your_web3forms_key
-CURRENCY=INR
-
-# Token used by printer-pc to connect
-AGENT_TOKEN=your_agent_token
+```bash
+# In the project root, copy the example file
+cp server/.env.example server/.env
 ```
+
+Open `server/.env` in a text editor and fill in your values (database credentials, Razorpay API keys, and `AGENT_TOKEN`).
 
 ### Running the server with Docker:
 

@@ -16,10 +16,8 @@ resource/uploads/
 .env.local
 .env.*
 server/.env.*
-
-# Printer PC agent configuration
-agent_config.json
-printer-pc/agent_config.json
+!.env.example
+!server/.env.example
 
 # Databases
 *.db
