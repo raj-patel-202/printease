@@ -228,11 +228,22 @@ This step is done on the Windows computer physically connected (via USB or LAN) 
      "agent_token": "your_secure_agent_token_here"
    }
    ```
-   - `server_url`: Address of your running PrintEase server (e.g., `http://localhost:8000` or your hosted domain).
-   - `agent_token`: Must exactly match the `AGENT_TOKEN` set in your `.env` file.
+   - `server_url`: Address of your running PrintEase server.
+     - **Same PC as server:** Use `http://localhost:8000`.
+     - **Separate PC on the same network (LAN):** Use the server machine's local IP (e.g., `http://192.168.1.50:8000`). *(Do not use `localhost` when running on a separate machine).*
+     - **Cloud / VPS:** Use your server domain or public IP (e.g., `https://print.yourdomain.com`).
+   - `agent_token`: Must exactly match the `AGENT_TOKEN` set in the server's `.env` file.
+
+> [!NOTE]
+> **If running on a separate PC across the local network:**
+> - Ensure the server PC allows inbound connections on port 8000 through the Windows Defender Firewall:
+>   ```powershell
+>   New-NetFirewallRule -DisplayName "PrintEase Port 8000" -Direction Inbound -LocalPort 8000 -Protocol TCP -Action Allow
+>   ```
 
 2. **Run the Agent:**
    - Double-click `PrintEaseAgent.exe`.
+   - If Windows SmartScreen shows a warning (*"Windows protected your PC"*), click **More info** -> **Run anyway**.
    - The application will start and minimize to the **Windows System Tray** (bottom-right corner of the taskbar, near the clock).
 
 3. **Select Your Printer:**
