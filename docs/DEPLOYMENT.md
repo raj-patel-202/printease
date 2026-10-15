@@ -65,6 +65,30 @@ with `python scripts/check_baseline.py`, then `alembic stamp 0001_baseline`, the
 alter schema. The startup check refuses an outdated schema. Existing login cookies
 are invalidated by the new required token-version claims.
 
+### If the image builds but the migration service exits
+
+An old installation may fail with `relation "users" already exists` when the
+baseline migration tries to create tables that the original app already created.
+This is a database upgrade issue, not an image build failure. The Compose migration
+runner now detects this situation before executing any schema changes and prints
+the upgrade instructions. It never guesses a baseline or deletes existing tables.
+
+After taking and verifying a database/PDF backup, use these exact Compose commands
+for a database that the baseline checker confirms matches the original schema:
+
+```sh
+docker compose run --rm --no-deps migrate python scripts/check_baseline.py
+# Continue only when the baseline matches and duplicate identities are resolved.
+docker compose run --rm --no-deps migrate alembic stamp 0001_baseline
+docker compose run --rm --no-deps migrate alembic upgrade head
+docker compose run --rm --no-deps migrate alembic check
+docker compose up --build -d --wait
+```
+
+This adoption is needed once per existing database. Subsequent deployments apply
+versioned upgrades automatically. Do not use `docker compose down -v` as a fix:
+that removes the persistent database volume.
+
 ## Public deployment with HTTPS
 
 Use a Linux host with Docker Compose and a DNS name pointing to it. Set `SITE_DOMAIN`

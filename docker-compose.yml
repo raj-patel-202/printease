@@ -32,7 +32,7 @@ services:
   migrate:
     build: .
     env_file: .env
-    command: ["alembic", "upgrade", "head"]
+    command: ["python", "scripts/migrate.py"]
     depends_on:
       db:
         condition: service_healthy
