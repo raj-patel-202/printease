@@ -12,6 +12,17 @@ SQLALCHEMY_DATABASE_URL = settings.database_url
 engine = create_async_engine(
     SQLALCHEMY_DATABASE_URL,
     pool_pre_ping=True,
+    pool_size=settings.db_pool_size,
+    max_overflow=settings.db_max_overflow,
+    pool_timeout=settings.db_pool_timeout_seconds,
+    pool_recycle=1800,
+    connect_args={
+        "server_settings": {
+            "statement_timeout": str(settings.db_statement_timeout_ms),
+            "idle_in_transaction_session_timeout": "60000",
+            "application_name": "printease",
+        }
+    },
 )
 
 AsyncSessionLocal = async_sessionmaker(
@@ -26,8 +37,13 @@ class Base(DeclarativeBase):
 
 
 async def get_db():
+    """One session per request; services explicitly commit successful changes."""
     async with AsyncSessionLocal() as session:
-        yield session
+        try:
+            yield session
+        except Exception:
+            await session.rollback()
+            raise
 
 
 async def acquire_transaction_advisory_lock(

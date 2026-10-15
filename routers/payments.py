@@ -1,4 +1,5 @@
 import json
+import logging
 from datetime import UTC, datetime
 
 import razorpay
@@ -6,9 +7,10 @@ from fastapi import APIRouter, HTTPException, Request, status
 from fastapi.responses import RedirectResponse
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
+from pydantic import ValidationError
+from schemas.webhooks import WebhookEnvelope, CapturedPayment, RefundEntity
 
 from authentication.auth import CurrentUser
-from config import settings
 from models import models
 from models.database import DBSession, acquire_transaction_advisory_lock
 from services.payment_service import (
@@ -27,6 +29,7 @@ from services.payment_service import (
 from utils.rate_limiter import limiter
 
 router = APIRouter(prefix="/api/payments", tags=["payments"])
+log = logging.getLogger("printease.payments")
 
 
 def checkout_redirect(code: str, receipt_token: str | None = None) -> RedirectResponse:
@@ -101,8 +104,8 @@ async def verify_payment(request: Request, db: DBSession):
     except PaymentServiceError as exc:
         await db.rollback()
         return checkout_redirect(exc.code, receipt_token)
-    except Exception as exc:
-        print(f"Payment verification error: {exc}")
+    except Exception:
+        log.exception("payment_verification_failed")
         await db.rollback()
         return checkout_redirect("internal_server_error", receipt_token)
 
@@ -128,8 +131,28 @@ async def razorpay_webhook(request: Request, db: DBSession):
         payload = json.loads(body)
     except Exception:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid JSON body")
+    if not isinstance(payload, dict):
+        raise HTTPException(status_code=400, detail="Webhook payload must be an object")
+    if len(event_id) > 100:
+        raise HTTPException(status_code=400, detail="Invalid event ID")
 
-    event_type = payload.get("event", "unknown")
+    try:
+        envelope = WebhookEnvelope.model_validate(payload)
+        event_type = envelope.event
+        validated_entity = None
+        if event_type == "payment.captured":
+            validated_entity = CapturedPayment.model_validate(
+                envelope.payload.get("payment", {}).get("entity", {})
+            ).model_dump()
+        elif event_type in {"refund.processed", "refund.failed"}:
+            validated_entity = RefundEntity.model_validate(
+                envelope.payload.get("refund", {}).get("entity", {})
+            ).model_dump()
+            if validated_entity["status"] != event_type.removeprefix("refund."):
+                raise ValueError("Refund status does not match event")
+    except (ValidationError, AttributeError, TypeError, ValueError) as exc:
+        raise HTTPException(400, "Invalid webhook payload") from exc
+
     event = models.RazorpayWebhookEvent(event_id=event_id, event_type=event_type, payload=payload)
     db.add(event)
     try:
@@ -144,13 +167,47 @@ async def razorpay_webhook(request: Request, db: DBSession):
     if not event:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Webhook event unavailable")
 
+    if event_type in {"refund.processed", "refund.failed"}:
+        refund = validated_entity
+        payment = await db.scalar(
+            select(models.Payment).where(models.Payment.razorpay_payment_id == refund.get("payment_id"))
+        )
+        if not payment or not refund.get("id"):
+            event.status = "failed"
+            event.error_message = "Refund payment not found"
+            await db.commit()
+            raise HTTPException(400, "Refund payment not found")
+        await acquire_transaction_advisory_lock(db, namespace=2, key=payment.order_id)
+        payment = await get_payment_by_order_id(db, payment.order_id)
+        if payment.refund_id and payment.refund_id != refund["id"]:
+            raise HTTPException(409, "Refund identifier mismatch")
+        payment.refund_id = refund["id"]
+        if payment.payment_status != "refunded":
+            expected_amount = payment.captured_amount or payment.order.total_cost * 100
+            if refund["amount"] > expected_amount:
+                event.status = "failed"
+                event.error_message = "Refund exceeds recorded captured amount; reconciliation required"
+                await db.commit()
+                raise HTTPException(409, "Refund amount requires reconciliation")
+            partial = event_type == "refund.processed" and refund["amount"] < expected_amount
+            payment.refund_status = "partial" if partial else refund["status"]
+            payment.payment_status = (
+                "refund_pending" if partial else ("refunded" if event_type == "refund.processed" else "refund_failed")
+            )
+            if event_type == "refund.processed":
+                payment.order.print_status = "failed" if partial else "refunded"
+        event.status = "processed"
+        event.processed_at = datetime.now(UTC)
+        await db.commit()
+        return {"status": "ok"}
+
     if event_type != "payment.captured":
         event.status = "ignored"
         event.processed_at = datetime.now(UTC)
         await db.commit()
         return {"status": "ok", "message": "Unsupported event ignored"}
 
-    entity = payload.get("payload", {}).get("payment", {}).get("entity", {})
+    entity = validated_entity
     razorpay_payment_id = entity.get("id")
     razorpay_order_id = entity.get("order_id")
     if not razorpay_payment_id or not razorpay_order_id or entity.get("status") != "captured":
@@ -188,7 +245,9 @@ async def create_razorpay_order(request: Request, order_id: int, db: DBSession, 
 
     payment = await get_payment_by_order_id(db, order_id)
     if not payment or payment.order.user_id != current_user.id:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail={"code": "order_not_found", "message": "Order not found."})
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail={"code": "order_not_found", "message": "Order not found."}
+        )
     if payment.payment_status in PAYMENT_TERMINAL_STATES:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
@@ -205,7 +264,9 @@ async def create_razorpay_order(request: Request, order_id: int, db: DBSession, 
                 await db.commit()
                 return provider_order
         except Exception:
-            pass
+            log.exception("provider_order_lookup_failed", extra={"target_id": order_id})
+            raise HTTPException(503, "Payment provider is unavailable; retry later")
+        raise HTTPException(409, "Existing payment order needs staff review")
 
     # Create a new Razorpay order
     provider_order = await create_provider_order(
@@ -226,7 +287,8 @@ async def create_razorpay_order(request: Request, order_id: int, db: DBSession, 
                 await db.commit()
                 return existing_order
             except Exception:
-                pass
+                log.exception("provider_order_lookup_failed", extra={"target_id": order_id})
+                raise HTTPException(503, "Payment provider is unavailable; retry later")
 
     await db.commit()
     return provider_order

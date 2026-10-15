@@ -8,7 +8,7 @@
 {% endblock active_nav %}
 
 {% block styles %}
-<link rel="stylesheet" href="{{ url_for('static', path='css/order.css') }}?v=3"/>
+<link rel="stylesheet" href="{{ static_asset(request, path='css/order.css') }}"/>
 {% endblock styles %}
 
 {% block content %}
@@ -92,5 +92,5 @@
 {% endblock content %}
 
 {% block scripts %}
-<script src="{{ url_for('static', path='js/order.js') }}?v=3"></script>
+<script src="{{ static_asset(request, path='js/order.js') }}"></script>
 {% endblock scripts %}

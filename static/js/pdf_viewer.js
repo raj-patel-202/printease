@@ -25,8 +25,10 @@ export class PDFPreviewer {
       usesCanvas: false,
     };
 
-    this.PDFJS_LOCAL  = '/static/js/vendor/pdf.min.js';
-    this.PDFJS_WORKER = '/static/js/vendor/pdf.worker.min.js';
+    this.PDFJS_ROOT = '/static/js/vendor/pdfjs/';
+    this.PDFJS_LOCAL = `${this.PDFJS_ROOT}build/pdf.min.mjs`;
+    this.PDFJS_WORKER = `${this.PDFJS_ROOT}build/pdf.worker.min.mjs`;
+    this.pdfJsLoading = null;
 
     this.initZoomControls();
   }
@@ -39,27 +41,15 @@ export class PDFPreviewer {
     throw new Error('Invalid file object');
   }
 
-  loadScript(src) {
-    return new Promise((resolve, reject) => {
-      if (document.querySelector(`script[src="${src}"]`)) {
-        resolve();
-        return;
-      }
-      const s = document.createElement('script');
-      s.src = src;
-      s.onload = () => resolve();
-      s.onerror = () => reject(new Error(`Failed to load ${src}`));
-      document.head.appendChild(s);
-    });
-  }
-
   async loadPdfJs() {
     if (this.pdfJsLib) return this.pdfJsLib;
-    if (!window.pdfjsLib) {
-      await this.loadScript(this.PDFJS_LOCAL);
+    if (!this.pdfJsLoading) {
+      this.pdfJsLoading = import(this.PDFJS_LOCAL).catch(error => {
+        this.pdfJsLoading = null;
+        throw error;
+      });
     }
-    if (!window.pdfjsLib) throw new Error('PDF.js failed to load');
-    this.pdfJsLib = window.pdfjsLib;
+    this.pdfJsLib = await this.pdfJsLoading;
     this.pdfJsLib.GlobalWorkerOptions.workerSrc = this.PDFJS_WORKER;
     return this.pdfJsLib;
   }
@@ -196,10 +186,15 @@ export class PDFPreviewer {
 
     const pdf = await lib.getDocument({
       data,
-      disableWorker: true,
       disableAutoFetch: true,
       disableStream: true,
       isEvalSupported: false,
+      enableScripting: false,
+      enableXfa: false,
+      cMapUrl: `${this.PDFJS_ROOT}cmaps/`,
+      cMapPacked: true,
+      standardFontDataUrl: `${this.PDFJS_ROOT}standard_fonts/`,
+      wasmUrl: `${this.PDFJS_ROOT}wasm/`,
     }).promise;
 
     if (renderId !== this.pdfRenderToken) return false;

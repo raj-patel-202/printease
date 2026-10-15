@@ -1,30 +1,19 @@
-# Web Framework
-fastapi
-uvicorn
-python-multipart
-jinja2
-slowapi
-
-# Database
-SQLAlchemy[asyncio]
-asyncpg
-greenlet
-
-# Environment & Config
-pydantic[email]
-pydantic-settings
-python-dotenv
-
-# Security & Auth
-pwdlib[argon2]
-PyJWT
-
-# Utilities
-aiofiles
-pypdf
-razorpay
-httpx
-
-# Testing
-pytest
-pytest-asyncio
+# Direct runtime dependencies. Container builds use requirements.lock.
+fastapi==0.143.0
+uvicorn==0.54.0
+python-multipart==0.0.32
+jinja2==3.1.6
+slowapi==0.1.10
+SQLAlchemy[asyncio]==2.1.4
+asyncpg==0.32.0
+greenlet==3.5.6
+pydantic[email]==2.14.1
+pydantic-settings==2.15.0
+python-dotenv==1.2.4
+pwdlib[argon2]==0.3.1
+PyJWT==2.15.1
+aiofiles==25.1.0
+pypdf==6.20.1
+razorpay==2.0.1
+httpx==0.28.1
+alembic==1.20.0

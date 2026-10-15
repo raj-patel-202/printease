@@ -2,7 +2,7 @@
 {% from "macros.html" import printease_badge %}
 
 {% block styles %}
-<link rel="stylesheet" href="{{ url_for('static', path='css/contact.css') }}"/>
+<link rel="stylesheet" href="{{ static_asset(request, path='css/contact.css') }}"/>
 {% endblock %}
 
 {% block active_nav %}
@@ -20,28 +20,28 @@
 
       <div class="info-items">
         <div class="info-item">
-          <div class="info-icon"><img src="{{ url_for('static', path='icons/location.svg') }}" alt="Location" style="height: 32px; width: auto;" class="svg-icon"></div>
+          <div class="info-icon"><img src="{{ static_asset(request, path='icons/location.svg') }}" alt="Location" style="height: 32px; width: auto;" class="svg-icon"></div>
           <div class="info-text">
             <strong>Location</strong>
             <span>123 Print Avenue,<br/>Tech District, Cityville</span>
           </div>
         </div>
         <div class="info-item">
-          <div class="info-icon"><img src="{{ url_for('static', path='icons/phone.svg') }}" alt="Phone" style="height: 32px; width: auto;" class="svg-icon"></div>
+          <div class="info-icon"><img src="{{ static_asset(request, path='icons/phone.svg') }}" alt="Phone" style="height: 32px; width: auto;" class="svg-icon"></div>
           <div class="info-text">
             <strong>Phone</strong>
             <span>+1 (555) 123-4567</span>
           </div>
         </div>
         <div class="info-item">
-          <div class="info-icon"><img src="{{ url_for('static', path='icons/email.svg') }}" alt="Email" style="height: 32px; width: auto;" class="svg-icon"></div>
+          <div class="info-icon"><img src="{{ static_asset(request, path='icons/email.svg') }}" alt="Email" style="height: 32px; width: auto;" class="svg-icon"></div>
           <div class="info-text">
             <strong>Email</strong>
             <span>hello@example.com</span>
           </div>
         </div>
         <div class="info-item">
-          <div class="info-icon"><img src="{{ url_for('static', path='icons/time.svg') }}" alt="Time" style="height: 32px; width: auto;" class="svg-icon"></div>
+          <div class="info-icon"><img src="{{ static_asset(request, path='icons/time.svg') }}" alt="Time" style="height: 32px; width: auto;" class="svg-icon"></div>
           <div class="info-text">
             <strong>Working Hours</strong>
             <span>Mon – Sat, 9:00 AM – 7:00 PM</span>
@@ -84,7 +84,7 @@
       <input type="hidden" name="botcheck" id="botcheck" style="display: none;">
       <input type="hidden" id="web3forms_access_key" value="{{ web3forms_access_key }}">
 
-      <button class="btn-send" id="sendBtn"><img src="{{ url_for('static', path='icons/email.svg') }}" alt="Email" style="height: 24px; width: auto; filter: brightness(0) invert(1);" class=""> Send Message</button>
+      <button class="btn-send" id="sendBtn"><img src="{{ static_asset(request, path='icons/email.svg') }}" alt="Email" style="height: 24px; width: auto; filter: brightness(0) invert(1);" class=""> Send Message</button>
     </div>
 
   </main>
@@ -96,5 +96,5 @@
 {% endblock %}
 
 {% block scripts %}
-<script src="{{ url_for('static', path='js/contact.js') }}"></script>
+<script src="{{ static_asset(request, path='js/contact.js') }}"></script>
 {% endblock %}

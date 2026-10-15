@@ -12,6 +12,8 @@ from config import settings
 from models.database import DBSession
 
 password_hash = PasswordHash.recommended()
+DUMMY_PASSWORD_HASH = password_hash.hash("dummy-password-never-used-for-login")
+
 
 def get_token_from_cookie(request: Request) -> str:
     token = request.cookies.get(settings.cookie_name)
@@ -22,19 +24,28 @@ def get_token_from_cookie(request: Request) -> str:
         )
     return token
 
+
 BearerToken = Annotated[str, Depends(get_token_from_cookie)]
+
 
 def hash_password(password: str) -> str:
     return password_hash.hash(password)
 
+
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    return password_hash.verify(plain_password, hashed_password)
+    try:
+        return password_hash.verify(plain_password, hashed_password)
+    except (ValueError, TypeError):
+        return False
+
 
 async def hash_password_async(password: str) -> str:
     return await run_in_threadpool(hash_password, password)
 
+
 async def verify_password_async(plain_password: str, hashed_password: str) -> bool:
     return await run_in_threadpool(verify_password, plain_password, hashed_password)
+
 
 def create_access_token(data: dict, expires_delta: timedelta | None = None) -> str:
     to_encode = data.copy()
@@ -46,37 +57,42 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None) -> s
             minutes=settings.access_token_expire_minutes,
         )
 
-    to_encode.update({"exp": expire})
+    to_encode.setdefault("ver", 0)
+    to_encode.update({"exp": expire, "iat": datetime.now(UTC)})
 
-    return jwt.encode(
-        to_encode,
-        settings.secret_key.get_secret_value(),
-        algorithm=settings.algorithm
-    )
+    return jwt.encode(to_encode, settings.secret_key.get_secret_value(), algorithm=settings.algorithm)
 
-def verify_access_token(token: str) -> str | None:
+
+def decode_access_token(token: str, role: str) -> dict | None:
     try:
         payload = jwt.decode(
             token,
             settings.secret_key.get_secret_value(),
             algorithms=[settings.algorithm],
-            options={"require": ["exp", "sub", "type"]},
+            options={"require": ["exp", "iat", "sub", "type", "ver"]},
         )
-        
-        if payload.get("type") != "user":
+
+        if payload.get("type") != role or type(payload.get("ver")) is not int:
             return None
-            
+
     except jwt.InvalidTokenError:
         return None
     else:
-        return payload.get("sub")
+        return payload
+
+
+def verify_access_token(token: str) -> str | None:
+    payload = decode_access_token(token, "user")
+    return payload.get("sub") if payload else None
+
 
 async def get_current_user(
     token: BearerToken,
     db: DBSession,
 ) -> models.User:
 
-    user_id = verify_access_token(token)
+    payload = decode_access_token(token, "user")
+    user_id = payload.get("sub") if payload else None
 
     if user_id is None:
         raise HTTPException(
@@ -99,13 +115,14 @@ async def get_current_user(
     )
 
     user = result.scalars().first()
-    if not user:
+    if not user or not user.is_active or user.token_version != payload["ver"]:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="User not found",
             headers={"WWW-Authenticate": "Bearer"},
         )
     return user
+
 
 CurrentUser = Annotated[models.User, Depends(get_current_user)]
 
@@ -121,41 +138,22 @@ def get_admin_token_from_cookie(request: Request) -> str:
 
     return token
 
+
 AdminBearerToken = Annotated[str, Depends(get_admin_token_from_cookie)]
 
+
 def verify_admin_access_token(token: str) -> str | None:
-    """
-    Admin token verification.
+    payload = decode_access_token(token, "admin")
+    return payload.get("sub") if payload else None
 
-    Requires:
-    {
-        "sub": "...",
-        "type": "admin"
-    }
-    """
-
-    try:
-        payload = jwt.decode(
-            token,
-            settings.secret_key.get_secret_value(),
-            algorithms=[settings.algorithm],
-            options={"require": ["exp", "sub", "type"]},
-        )
-
-        if payload.get("type") != "admin":
-            return None
-
-        return payload.get("sub")
-
-    except jwt.InvalidTokenError:
-        return None
 
 async def get_current_admin(
     token: AdminBearerToken,
     db: DBSession,
 ) -> models.Admin:
 
-    admin_id = verify_admin_access_token(token)
+    payload = decode_access_token(token, "admin")
+    admin_id = payload.get("sub") if payload else None
 
     if admin_id is None:
         raise HTTPException(
@@ -179,7 +177,7 @@ async def get_current_admin(
 
     admin = result.scalar_one_or_none()
 
-    if not admin:
+    if not admin or admin.token_version != payload["ver"]:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid or expired token",

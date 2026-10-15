@@ -1,7 +1,7 @@
 {% extends "layout.html" %}
 
 {% block styles %}
-<link rel="stylesheet" href="{{ url_for('static', path='css/account_settings.css') }}"/>
+<link rel="stylesheet" href="{{ static_asset(request, path='css/account_settings.css') }}"/>
 {% endblock %}
 
 {% block active_nav %}
@@ -38,14 +38,14 @@
 
       <section class="settings-panel reveal">
         <div class="panel-header">
-          <span class="panel-icon"><img src="{{ url_for('static', path='icons/edit_user.svg') }}" class="svg-icon" style="height: 34px; width: auto;"></span>
+          <span class="panel-icon"><img src="{{ static_asset(request, path='icons/edit_user.svg') }}" class="svg-icon" style="height: 34px; width: auto;"></span>
           <div>
             <h2 class="panel-title">Change Username</h2>
             <p class="panel-subtitle">Update how your name appears across the platform</p>
           </div>
         </div>
 
-        <form id="usernameForm" novalidate>
+        <form method="post" id="usernameForm" novalidate>
           <div class="form-group">
             <label for="new_username">New Username</label>
             <div class="input-wrap">
@@ -72,9 +72,22 @@
         </form>
       </section>
 
+      <section class="settings-panel reveal">
+        <h2>Change password</h2>
+        <p>Changing your password signs out all your sessions.</p>
+        <form method="post" id="passwordForm">
+          <div class="form-group"><label for="current_password">Current password</label>
+            <input type="password" id="current_password" autocomplete="current-password" required maxlength="128" /></div>
+          <div class="form-group"><label for="new_password">New password</label>
+            <input type="password" id="new_password" autocomplete="new-password" required minlength="12" maxlength="128" /></div>
+          <button type="submit" id="changePasswordBtn">Change password</button>
+          <p id="passwordNotice" role="status" aria-live="polite"></p>
+        </form>
+      </section>
+
       <section class="settings-panel danger-panel reveal">
         <div class="panel-header">
-          <span class="panel-icon"><img src="{{ url_for('static', path='icons/error_danger.svg') }}" class="svg-icon" style="height: 24px; width: auto;"></span>
+          <span class="panel-icon"><img src="{{ static_asset(request, path='icons/error_danger.svg') }}" class="svg-icon" style="height: 24px; width: auto;"></span>
           <div>
             <h2 class="panel-title danger-title">Delete Account</h2>
             <p class="panel-subtitle">This action is permanent and cannot be undone</p>
@@ -82,7 +95,7 @@
         </div>
 
         <div class="danger-warning">
-          <strong><img src="{{ url_for('static', path='icons/warning.svg') }}" class="svg-icon" style="height: 1.1em; width: auto; vertical-align: text-bottom; margin-right: 4px;"> What happens when you delete your account:</strong>
+          <strong><img src="{{ static_asset(request, path='icons/warning.svg') }}" class="svg-icon" style="height: 1.1em; width: auto; vertical-align: text-bottom; margin-right: 4px;"> What happens when you delete your account:</strong>
           <ul>
             <li>Your profile, username, and email will be permanently erased.</li>
             <li>All your orders and payment records will be deleted.</li>
@@ -91,7 +104,7 @@
           </ul>
         </div>
 
-        <form id="deleteAccountForm" novalidate>
+        <form method="post" id="deleteAccountForm" novalidate>
           <div class="form-group">
             <label for="delete_password">Confirm Your Password</label>
             <div class="input-wrap">
@@ -114,5 +127,5 @@
 {% endblock %}
 
 {% block scripts %}
-<script src="{{ url_for('static', path='js/account_settings.js') }}?v=2"></script>
+<script src="{{ static_asset(request, path='js/account_settings.js') }}"></script>
 {% endblock %}

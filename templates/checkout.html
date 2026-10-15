@@ -2,7 +2,7 @@
 {% from "macros.html" import printease_badge %}
 
 {% block styles %}
-<link rel="stylesheet" href="{{ url_for('static', path='css/checkout.css') }}?v=4"/>
+<link rel="stylesheet" href="{{ static_asset(request, path='css/checkout.css') }}"/>
 {% endblock styles %}
 
 {% block active_nav %}
@@ -36,7 +36,7 @@
         <div class="config-grid">
           <div class="config-item">
             <div class="config-icon-wrap">
-              <img src="{{ url_for('static', path='icons/page.svg') }}" alt="Pages" style="height: 28px; max-width: 34px; object-fit: contain;" class="svg-icon">
+              <img src="{{ static_asset(request, path='icons/page.svg') }}" alt="Pages" style="height: 28px; max-width: 34px; object-fit: contain;" class="svg-icon">
             </div>
             <div class="config-text">
               <span class="config-label">Pages / Copy</span>
@@ -46,7 +46,7 @@
 
           <div class="config-item">
             <div class="config-icon-wrap">
-              <img src="{{ url_for('static', path='icons/copy.svg') }}" alt="Copies" style="height: 28px; max-width: 34px; object-fit: contain;" class="svg-icon">
+              <img src="{{ static_asset(request, path='icons/copy.svg') }}" alt="Copies" style="height: 28px; max-width: 34px; object-fit: contain;" class="svg-icon">
             </div>
             <div class="config-text">
               <span class="config-label">Copies</span>
@@ -56,7 +56,7 @@
 
           <div class="config-item">
             <div class="config-icon-wrap">
-              <img src="{{ url_for('static', path='icons/paper_size.svg') }}" alt="Paper Size" style="height: 28px; max-width: 34px; object-fit: contain;" class="svg-icon">
+              <img src="{{ static_asset(request, path='icons/paper_size.svg') }}" alt="Paper Size" style="height: 28px; max-width: 34px; object-fit: contain;" class="svg-icon">
             </div>
             <div class="config-text">
               <span class="config-label">Paper Size</span>
@@ -66,7 +66,7 @@
 
           <div class="config-item">
             <div class="config-icon-wrap">
-              <img src="{{ url_for('static', path='icons/orientation.svg') }}" alt="Orientation" style="height: 28px; max-width: 34px; object-fit: contain;" class="svg-icon">
+              <img src="{{ static_asset(request, path='icons/orientation.svg') }}" alt="Orientation" style="height: 28px; max-width: 34px; object-fit: contain;" class="svg-icon">
             </div>
             <div class="config-text">
               <span class="config-label">Orientation</span>
@@ -76,7 +76,7 @@
 
           <div class="config-item">
             <div class="config-icon-wrap">
-              <img src="{{ url_for('static', path='icons/sides.svg') }}" alt="Sides" style="height: 28px; max-width: 34px; object-fit: contain;" class="svg-icon">
+              <img src="{{ static_asset(request, path='icons/sides.svg') }}" alt="Sides" style="height: 28px; max-width: 34px; object-fit: contain;" class="svg-icon">
             </div>
             <div class="config-text">
               <span class="config-label">Sides</span>
@@ -86,7 +86,7 @@
 
           <div class="config-item">
             <div class="config-icon-wrap">
-              <img src="{{ url_for('static', path='icons/color.svg') }}" alt="Color Mode" style="height: 28px; max-width: 34px; object-fit: contain;" class="svg-icon">
+              <img src="{{ static_asset(request, path='icons/color.svg') }}" alt="Color Mode" style="height: 28px; max-width: 34px; object-fit: contain;" class="svg-icon">
             </div>
             <div class="config-text">
               <span class="config-label">Color Mode</span>
@@ -180,5 +180,5 @@
   window.razorpay_api_key = "{{ razorpay_api_key }}";
 </script>
 
-<script src="{{ url_for('static', path='js/checkout.js') }}?v=3"></script>
+<script src="{{ static_asset(request, path='js/checkout.js') }}"></script>
 {% endblock scripts %}

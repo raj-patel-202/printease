@@ -1,0 +1,47 @@
+{% extends "admin_layout.html" %}
+{% block admin_nav %}<a href="/admin/dashboard">Print dashboard</a>{% endblock %}
+{% block styles %}
+<style>
+  .operations { width:100%; max-width:1100px; margin:2.5rem auto; padding:0 1.25rem; min-width:0; }
+  .operations h1 { margin-bottom:.5rem; }
+  .operations h2 { font-size:1.4rem; margin-bottom:.75rem; }
+  .operations p { color:var(--ink-muted); line-height:1.6; margin-bottom:1rem; }
+  .operations-card { background:var(--white); border:1px solid var(--border); border-radius:16px; padding:1.5rem; margin:1.5rem 0; min-width:0; }
+  .system-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:1rem; }
+  .system-stat { padding:1rem; background:var(--bg); border-radius:10px; }
+  .system-label { display:block; font-size:.8rem; color:var(--ink-muted); margin-bottom:.4rem; }
+  .system-value { font-size:1.35rem; font-weight:600; }
+  .operations-scroll { overflow-x:auto; max-width:100%; }
+  .operations table { width:100%; text-align:left; border-collapse:collapse; font-size:.9rem; }
+  .operations th { padding:.7rem; font-size:.75rem; text-transform:uppercase; color:var(--ink-muted); border-bottom:1px solid var(--border); }
+  .operations td { border-bottom:1px solid var(--border); overflow-wrap:anywhere; }
+  .operations button { padding:.55rem .8rem; background:var(--accent-light); border:1px solid var(--border); color:var(--accent); border-radius:8px; cursor:pointer; font:inherit; }
+  .operations button:disabled { opacity:.45; cursor:default; }
+  .operations-pagination { display:flex; align-items:center; flex-wrap:wrap; gap:.75rem; margin-top:1rem; font-size:.85rem; }
+  .operations details { margin-top:1rem; font-size:.85rem; }
+  .operations pre { white-space:pre-wrap; overflow-wrap:anywhere; padding:1rem 0; }
+  @media(max-width:600px) { .operations { margin:1.5rem auto; } .operations-card { padding:1rem; } .operations h1 { font-size:1.9rem; } .operations table { min-width:540px; } }
+</style>
+{% endblock %}
+{% block content %}
+<main class="operations">
+  <h1>Users &amp; operations</h1>
+  <p id="notice" role="status" aria-live="polite"></p>
+  <section class="operations-card"><h2>System status</h2><div id="system" class="system-grid"></div>
+  <details><summary>Database connection details</summary><pre id="pool-details"></pre></details></section>
+  <section class="operations-card">
+  <h2>User access</h2>
+  <p>Suspending a user blocks login and existing sessions. Paid orders remain available to staff.</p>
+  <div class="operations-scroll"><table>
+    <thead><tr><th>ID</th><th>Username</th><th>Email</th><th>Access</th><th>Action</th></tr></thead>
+    <tbody id="users"></tbody></table></div>
+  <div class="operations-pagination"><button id="previous">Previous users</button> <span id="page"></span> <button id="next">Next users</button></div></section>
+  <section class="operations-card">
+  <h2>Audit history</h2><p>Recent administrative actions, with request IDs for log correlation.</p>
+  <div class="operations-scroll"><table>
+    <thead><tr><th>Time</th><th>Admin</th><th>Action</th><th>Target</th><th>Request ID</th></tr></thead>
+    <tbody id="audit"></tbody></table></div>
+  <div class="operations-pagination"><button id="audit-previous">Previous history</button> <span id="audit-page"></span> <button id="audit-next">Next history</button></div></section>
+</main>
+{% endblock %}
+{% block scripts %}<script src="{{ static_asset(request, path='js/admin_operations.js') }}" defer></script>{% endblock %}

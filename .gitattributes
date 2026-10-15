@@ -1,0 +1,8 @@
+# Consistent source files on Windows and Linux.
+* text=auto eol=lf
+
+# Keep downloaded vendor assets byte-for-byte identical to their integrity manifest.
+static/js/vendor/pdfjs/** -text -whitespace
+
+# The Windows printer agent is distributed as a binary.
+*.exe binary

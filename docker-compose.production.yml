@@ -1,0 +1,40 @@
+# One TLS edge proxy, one application worker, one database.
+services:
+  web:
+    environment:
+      ENVIRONMENT: production
+      COOKIE_SECURE: "true"
+      FORWARDED_ALLOW_IPS: "172.30.0.10"
+      # Allow the internal healthcheck and the public domain only.
+      ALLOWED_HOSTS: '["localhost","${SITE_DOMAIN:?Set SITE_DOMAIN}"]'
+      TRUSTED_ORIGINS: '["https://${SITE_DOMAIN:?Set SITE_DOMAIN}"]'
+    networks: [edge, default]
+  proxy:
+    image: caddy:2-alpine
+    environment:
+      SITE_DOMAIN: ${SITE_DOMAIN:?Set SITE_DOMAIN}
+    ports: ["80:80", "443:443"]
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    networks:
+      edge:
+        ipv4_address: 172.30.0.10
+    depends_on:
+      web:
+        condition: service_healthy
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+networks:
+  edge:
+    ipam:
+      config:
+        - subnet: 172.30.0.0/24
+volumes:
+  caddy_data:
+  caddy_config:

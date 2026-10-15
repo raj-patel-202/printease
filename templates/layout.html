@@ -4,11 +4,11 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover"/>
   <title>PrintEase — {{ title }}</title>
-  <link rel="icon" type="image/svg+xml" href="{{ url_for('static', path='icons/printer.svg') }}">
+  <link rel="icon" type="image/svg+xml" href="{{ static_asset(request, path='icons/printer.svg') }}">
 
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
 
-  <link rel="stylesheet" href="{{ url_for('static', path='css/layout.css') }}"/>
+  <link rel="stylesheet" href="{{ static_asset(request, path='css/layout.css') }}"/>
 
   {% block styles %}{% endblock %}
 </head>
@@ -18,7 +18,7 @@
     <div class="header-inner">
       <div class="nav-left">
         <a href="{{ url_for('home') }}" class="logo">
-          <img src="{{ url_for('static', path='icons/printer.svg') }}" style="height: 28px; width: auto;" class="svg-icon">
+          <img src="{{ static_asset(request, path='icons/printer.svg') }}" style="height: 28px; width: auto;" class="svg-icon">
           <div>Print<span>Ease</span></div>
         </a>
         <nav class="nav-links">
@@ -41,16 +41,16 @@
               <button class="avatar-btn" id="avatar-toggle" aria-label="User menu" aria-expanded="false">
                 <span id="nav-username">User</span>
                 <img id="nav-avatar"
-                     src="{{ url_for('static', path='icons/user_logo.svg') }}?v=2"
+                     src="{{ static_asset(request, path='icons/user_logo.svg') }}"
                      alt="Profile"
                      class="avatar-img svg-icon" />
               </button>
 
               <div class="avatar-dropdown" id="avatar-dropdown">
-                <a href="{{ url_for('my_orders') }}"><img src="{{ url_for('static', path='icons/order.svg') }}" style="height: 24px; width: auto; vertical-align: middle; margin-right: 8px;" class="svg-icon">My Orders</a>
-                <a href="{{ url_for('account_settings') }}"><img src="{{ url_for('static', path='icons/account_setting.svg') }}" style="height: 24px; width: auto; vertical-align: middle; margin-right: 8px;" class="svg-icon">Account Settings</a>
+                <a href="{{ url_for('my_orders') }}"><img src="{{ static_asset(request, path='icons/order.svg') }}" style="height: 24px; width: auto; vertical-align: middle; margin-right: 8px;" class="svg-icon">My Orders</a>
+                <a href="{{ url_for('account_settings') }}"><img src="{{ static_asset(request, path='icons/account_setting.svg') }}" style="height: 24px; width: auto; vertical-align: middle; margin-right: 8px;" class="svg-icon">Account Settings</a>
                 <hr />
-                <a href="#" id="logout-btn" class="logout-link"><img src="{{ url_for('static', path='icons/login.svg') }}" style="height: 24px; width: auto; vertical-align: middle; margin-right: 8px; transform: scaleX(-1);" class="svg-icon">Log Out</a>
+                <a href="#" id="logout-btn" class="logout-link"><img src="{{ static_asset(request, path='icons/login.svg') }}" style="height: 24px; width: auto; vertical-align: middle; margin-right: 8px; transform: scaleX(-1);" class="svg-icon">Log Out</a>
               </div>
             </div>
           </div>
@@ -75,19 +75,19 @@
       <div class="mobile-menu-state" id="mobile-menu-guest">
         <nav class="mobile-nav-links" aria-label="Main navigation">
           <a href="{{ url_for('home') }}">
-            <img src="{{ url_for('static', path='icons/home.svg') }}" style="height: 22px; width: auto; vertical-align: middle; margin-right: 10px;" class="svg-icon"> Home
+            <img src="{{ static_asset(request, path='icons/home.svg') }}" style="height: 22px; width: auto; vertical-align: middle; margin-right: 10px;" class="svg-icon"> Home
           </a>
           <a href="{{ url_for('contact') }}">
-            <img src="{{ url_for('static', path='icons/contact.svg') }}" style="height: 22px; width: auto; vertical-align: middle; margin-right: 10px;" class="svg-icon"> Contact
+            <img src="{{ static_asset(request, path='icons/contact.svg') }}" style="height: 22px; width: auto; vertical-align: middle; margin-right: 10px;" class="svg-icon"> Contact
           </a>
         </nav>
         <hr class="mobile-nav-divider" />
         <nav class="mobile-nav-links" aria-label="Sign in">
           <a href="{{ url_for('login') }}">
-            <img src="{{ url_for('static', path='icons/login.svg') }}" style="height: 22px; width: auto; vertical-align: middle; margin-right: 10px;" class="svg-icon"> Login
+            <img src="{{ static_asset(request, path='icons/login.svg') }}" style="height: 22px; width: auto; vertical-align: middle; margin-right: 10px;" class="svg-icon"> Login
           </a>
           <a href="{{ url_for('register') }}">
-            <img src="{{ url_for('static', path='icons/register.svg') }}" style="height: 22px; width: auto; vertical-align: middle; margin-right: 10px;" class="svg-icon"> Register
+            <img src="{{ static_asset(request, path='icons/register.svg') }}" style="height: 22px; width: auto; vertical-align: middle; margin-right: 10px;" class="svg-icon"> Register
           </a>
         </nav>
       </div>
@@ -95,7 +95,7 @@
       <div class="mobile-menu-state" id="mobile-menu-user">
         <div class="mobile-nav-user-header">
           <img id="mobile-nav-avatar"
-               src="{{ url_for('static', path='icons/user_logo.svg') }}?v=2"
+               src="{{ static_asset(request, path='icons/user_logo.svg') }}"
                class="svg-icon"
                alt="" />
           <span id="mobile-nav-username">User</span>
@@ -103,25 +103,25 @@
         <hr class="mobile-nav-divider" />
         <nav class="mobile-nav-links" aria-label="Navigation 1">
           <a href="{{ url_for('home') }}">
-            <img src="{{ url_for('static', path='icons/home.svg') }}" style="height: 20px; width: auto; vertical-align: middle; margin-right: 10px;" class="svg-icon"> Home
+            <img src="{{ static_asset(request, path='icons/home.svg') }}" style="height: 20px; width: auto; vertical-align: middle; margin-right: 10px;" class="svg-icon"> Home
           </a>
           <a href="{{ url_for('my_orders') }}">
-            <img src="{{ url_for('static', path='icons/order.svg') }}" style="height: 20px; width: auto; vertical-align: middle; margin-right: 10px;" class="svg-icon"> My Orders
+            <img src="{{ static_asset(request, path='icons/order.svg') }}" style="height: 20px; width: auto; vertical-align: middle; margin-right: 10px;" class="svg-icon"> My Orders
           </a>
         </nav>
         <hr class="mobile-nav-divider" />
         <nav class="mobile-nav-links" aria-label="Navigation 2">
           <a href="{{ url_for('contact') }}">
-            <img src="{{ url_for('static', path='icons/contact.svg') }}" style="height: 20px; width: auto; vertical-align: middle; margin-right: 10px;" class="svg-icon"> Contact
+            <img src="{{ static_asset(request, path='icons/contact.svg') }}" style="height: 20px; width: auto; vertical-align: middle; margin-right: 10px;" class="svg-icon"> Contact
           </a>
           <a href="{{ url_for('account_settings') }}" id="mobile-account-settings">
-            <img src="{{ url_for('static', path='icons/account_setting.svg') }}" style="height: 20px; width: auto; vertical-align: middle; margin-right: 10px;" class="svg-icon"> Account Settings
+            <img src="{{ static_asset(request, path='icons/account_setting.svg') }}" style="height: 20px; width: auto; vertical-align: middle; margin-right: 10px;" class="svg-icon"> Account Settings
           </a>
         </nav>
         <hr class="mobile-nav-divider" />
         <nav class="mobile-nav-links" aria-label="Sign out">
           <a href="#" id="mobile-logout-btn" class="logout-link">
-            <img src="{{ url_for('static', path='icons/login.svg') }}" style="height: 20px; width: auto; vertical-align: middle; margin-right: 10px; transform: scaleX(-1);" class="svg-icon"> Log Out
+            <img src="{{ static_asset(request, path='icons/login.svg') }}" style="height: 20px; width: auto; vertical-align: middle; margin-right: 10px; transform: scaleX(-1);" class="svg-icon"> Log Out
           </a>
         </nav>
       </div>
@@ -141,7 +141,7 @@
   <div class="modal-backdrop" id="globalModal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
     <div class="modal-card">
       <button class="modal-close" id="modalClose" aria-label="Close">&times;</button>
-      <div class="modal-icon error" id="modalIcon"><img src="{{ url_for('static', path='icons/error.svg') }}" class="svg-icon" style="height: 1em; width: auto;"></div>
+      <div class="modal-icon error" id="modalIcon"><img src="{{ static_asset(request, path='icons/error.svg') }}" class="svg-icon" style="height: 1em; width: auto;"></div>
       <h2 class="modal-title" id="modalTitle">Something went wrong</h2>
       <p class="modal-body" id="modalBody"></p>
       <div class="modal-footer" id="modalFooter"></div>
@@ -179,7 +179,7 @@
     </div>
   </div>
 
-  <script type="module" src="{{ url_for('static', path='js/layout.js') }}"></script>
+  <script type="module" src="{{ static_asset(request, path='js/layout.js') }}"></script>
 
   {% block scripts %}{% endblock %}
 </body>

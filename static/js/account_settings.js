@@ -9,6 +9,23 @@ async function loadUserData() {
   }
 }
 
+document.getElementById('passwordForm').addEventListener('submit', async (event) => {
+  event.preventDefault();
+  const button = document.getElementById('changePasswordBtn');
+  const notice = document.getElementById('passwordNotice');
+  button.disabled = true;
+  try {
+    const response = await fetch('/api/users/me/password', {
+      method: 'PATCH', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({current_password: document.getElementById('current_password').value,
+                            new_password: document.getElementById('new_password').value})
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(typeof data.detail === 'string' ? data.detail : 'Password change failed');
+    window.location.assign('/login');
+  } catch (error) { notice.textContent = error.message; button.disabled = false; }
+});
+
 async function loadPaidOrderCount() {
   try {
     const res = await fetch("/api/users/orders/paid-count", { credentials: "include" });

@@ -1,4 +1,4 @@
-FROM python:3.13-slim
+FROM python:3.13-slim AS runtime
 
 # Prevent Python from writing pyc files and buffering stdout/stderr
 ENV PYTHONDONTWRITEBYTECODE=1
@@ -8,21 +8,18 @@ ENV PIP_DISABLE_PIP_VERSION_CHECK=1
 
 WORKDIR /app
 
-# Install system dependencies if any are needed for asyncpg/psycopg2
-RUN apt-get update && apt-get install -y \
-    build-essential \
-    libpq-dev \
-    && rm -rf /var/lib/apt/lists/*
-
 # Copy requirements and install
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+COPY requirements.lock .
+RUN pip install --no-cache-dir -r requirements.lock
+RUN groupadd --gid 10001 app && useradd --uid 10001 --gid app --create-home app
 
 # Copy the rest of the application
-COPY . .
+COPY --chown=app:app . .
+RUN mkdir -p /app/resource/uploads && chown -R app:app /app/resource
+USER app
 
 # Expose port
 EXPOSE 8000
 
 # Start the application
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--proxy-headers", "--forwarded-allow-ips", "*"]
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "1", "--no-access-log", "--limit-concurrency", "200", "--timeout-graceful-shutdown", "30"]

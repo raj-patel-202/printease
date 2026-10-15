@@ -116,7 +116,10 @@ function buildStatusDetailsHtml(data, order) {
 }
 
 function showStatusModalError(bodyEl, message) {
-  bodyEl.innerHTML = `<p class="status-modal-error">${message}</p>`;
+  const error = document.createElement('p');
+  error.className = 'status-modal-error';
+  error.textContent = message;
+  bodyEl.replaceChildren(error);
 }
 
 function openStatusModal(orderId) {

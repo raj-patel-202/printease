@@ -24,6 +24,7 @@ class PrintDispatcher:
     """
 
     def __init__(self):
+        self.lock = asyncio.Lock()
         self.is_running = False
         self.agent_last_seen: datetime | None = None
         self.agent_printer: str | None = None
@@ -64,9 +65,7 @@ class PrintDispatcher:
         """Anything left in 'printing' belongs to a run that no longer exists."""
         async with AsyncSessionLocal() as db:
             res = await db.execute(
-                update(models.Order)
-                .where(models.Order.print_status == "printing")
-                .values(print_status="failed")
+                update(models.Order).where(models.Order.print_status == "printing").values(print_status="failed")
             )
             await db.commit()
         if res.rowcount:
@@ -78,11 +77,12 @@ class PrintDispatcher:
         while True:
             await asyncio.sleep(30)
             try:
-                cur = self.current
-                if cur and datetime.now(timezone.utc) - cur["started_at"] > timeout:
-                    log.error("Order %s timed out while printing - marking failed", cur["order_id"])
-                    await self.fail_order(cur["order_id"])
-                    self.end_job()
+                async with self.lock:
+                    cur = self.current
+                    if cur and datetime.now(timezone.utc) - cur["started_at"] > timeout:
+                        log.error("Order %s timed out while printing - marking failed", cur["order_id"])
+                        await self.fail_order(cur["order_id"])
+                        self.end_job()
             except Exception:
                 log.exception("Dispatcher reaper error")
 

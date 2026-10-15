@@ -1,8 +1,9 @@
 from datetime import datetime, timezone
 from typing import Annotated, Literal, Optional, Generic, TypeVar, List
-from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_serializer
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, StringConstraints, field_serializer
 
 T = TypeVar("T")
+
 
 class PaginatedResponse(BaseModel, Generic[T]):
     items: List[T]
@@ -22,12 +23,12 @@ def _ensure_utc(v: datetime | None) -> str | None:
 
 # USER SCHEMAS
 class UserBase(BaseModel):
-    username: Annotated[str, Field(min_length=1, max_length=50)]
+    username: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=50)]
     email: EmailStr
 
 
 class UserCreate(UserBase):
-    password: Annotated[str, Field(min_length=8, max_length=50)]
+    password: Annotated[str, Field(min_length=8, max_length=128, repr=False)]
 
 
 class UserPublic(BaseModel):
@@ -41,18 +42,24 @@ class UserPrivate(UserPublic):
     email: EmailStr
     created_at: datetime
 
-    @field_serializer('created_at')
+    @field_serializer("created_at")
     def serialize_created_at(self, v: datetime | None, _info) -> str | None:
         return _ensure_utc(v)
 
 
 class UsernameUpdate(BaseModel):
-    new_username: Annotated[str, Field(min_length=1, max_length=50, strip_whitespace=True)]
-    password: Annotated[str, Field(min_length=8, max_length=50)]
+    new_username: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=50)]
+    password: Annotated[str, Field(min_length=8, max_length=128, repr=False)]
 
 
 class DeleteAccountRequest(BaseModel):
-    password: Annotated[str, Field(min_length=8, max_length=50)]
+    password: Annotated[str, Field(min_length=8, max_length=128, repr=False)]
+
+
+class PasswordUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    current_password: Annotated[str, Field(min_length=8, max_length=128, repr=False)]
+    new_password: Annotated[str, Field(min_length=12, max_length=128, repr=False)]
 
 
 # ORDER SCHEMAS
@@ -63,13 +70,16 @@ class OrderBase(BaseModel):
     paper_size: Literal["A4", "A3", "Letter", "Legal"]
     orientation: Literal["portrait", "landscape"]
 
+
 class OrderCreate(OrderBase):
     file_name: Annotated[str, Field(min_length=1, max_length=255, description="file name")]
     user_id: Annotated[int, Field(description="ID of the user placing the order")]
     total_pages: Annotated[int, Field(ge=1, description="Total pages in the document")]
     total_cost: Annotated[int, Field(ge=0, description="Total calculated cost of the job")]
 
-    print_status: Literal["pending", "printing", "completed", "delivered", "failed", "cancelled", "refunded"] = "pending"
+    print_status: Literal["pending", "printing", "completed", "delivered", "failed", "cancelled", "refunded"] = (
+        "pending"
+    )
 
 
 # PAYMENT SCHEMAS
@@ -87,7 +97,7 @@ class PaymentResponse(BaseModel):
     refund_id: Optional[str] = None
     refund_status: Optional[str] = None
 
-    @field_serializer('payment_datetime')
+    @field_serializer("payment_datetime")
     def serialize_payment_datetime(self, v: datetime | None, _info) -> str | None:
         return _ensure_utc(v)
 
@@ -105,7 +115,7 @@ class OrderResponsePrivate(OrderBase):
     date_ordered: datetime
     payment: Optional[PaymentResponse] = None
 
-    @field_serializer('date_ordered')
+    @field_serializer("date_ordered")
     def serialize_date_ordered(self, v: datetime | None, _info) -> str | None:
         return _ensure_utc(v)
 
@@ -121,7 +131,7 @@ class OrderListResponse(OrderBase):
     date_ordered: datetime
     payment: Optional[PaymentResponse] = None
 
-    @field_serializer('date_ordered')
+    @field_serializer("date_ordered")
     def serialize_date_ordered(self, v: datetime | None, _info) -> str | None:
         return _ensure_utc(v)
 
@@ -145,7 +155,7 @@ class CheckoutResponse(OrderBase):
     base_cost: float
     discount_amount: float
 
-    @field_serializer('date_ordered')
+    @field_serializer("date_ordered")
     def serialize_date_ordered(self, v: datetime | None, _info) -> str | None:
         return _ensure_utc(v)
 
@@ -168,9 +178,10 @@ class ReceiptResponse(BaseModel):
     base_cost: float
     discount_amount: float
 
-    @field_serializer('date_ordered')
+    @field_serializer("date_ordered")
     def serialize_date_ordered(self, v: datetime | None, _info) -> str | None:
         return _ensure_utc(v)
+
 
 class AdminFailedPaymentResponse(BaseModel):
     order_id: int
@@ -179,6 +190,6 @@ class AdminFailedPaymentResponse(BaseModel):
     payment_status: str
     payment_datetime: Optional[datetime] = None
 
-    @field_serializer('order_date', 'payment_datetime')
+    @field_serializer("order_date", "payment_datetime")
     def serialize_date(self, v: datetime | None, _info) -> str | None:
         return _ensure_utc(v)

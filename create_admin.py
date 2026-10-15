@@ -1,4 +1,6 @@
 import asyncio
+from getpass import getpass
+from pydantic import EmailStr, TypeAdapter
 import sys
 import os
 
@@ -9,16 +11,17 @@ from models.database import AsyncSessionLocal
 from models.models import Admin
 from authentication.auth import hash_password
 
+
 async def create_admin():
     print("=== Create Admin Account ===")
-    email = input("Enter admin email: ").strip()
+    email = str(TypeAdapter(EmailStr).validate_python(input("Enter admin email: ").strip())).lower()
     if not email:
         print("Email cannot be empty.")
         return
 
-    password = input("Enter admin password: ").strip()
-    if not password:
-        print("Password cannot be empty.")
+    password = getpass("Enter admin password (hidden): ")
+    if not 12 <= len(password) <= 128:
+        print("Admin password must contain 12 to 128 characters.")
         return
 
     async with AsyncSessionLocal() as session:
@@ -29,7 +32,7 @@ async def create_admin():
 
         hashed = hash_password(password)
         new_admin = Admin(email=email, password_hash=hashed)
-        
+
         try:
             session.add(new_admin)
             await session.commit()
@@ -38,6 +41,7 @@ async def create_admin():
         except Exception as e:
             await session.rollback()
             print(f"Failed to create admin: {e}")
+
 
 if __name__ == "__main__":
     asyncio.run(create_admin())

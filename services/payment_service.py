@@ -1,4 +1,6 @@
 import asyncio
+import logging
+import uuid
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from typing import Any, Callable
@@ -10,6 +12,11 @@ from sqlalchemy.orm import joinedload
 
 from config import settings
 from models import models
+from models.database import acquire_transaction_advisory_lock
+from schemas.webhooks import CapturedPayment
+from pydantic import ValidationError
+
+log = logging.getLogger("printease.payment_service")
 
 PAYMENT_TERMINAL_STATES = {
     "completed",
@@ -21,10 +28,9 @@ PAYMENT_TERMINAL_STATES = {
 }
 PAYMENT_ANOMALY_STATES = {"amount_mismatch_error", "refund_pending", "refund_failed"}
 
+
 def get_razorpay_client():
-    return razorpay.Client(
-        auth=(settings.razorpay_api_key, settings.razorpay_api_secret.get_secret_value())
-    )
+    return razorpay.Client(auth=(settings.razorpay_api_key, settings.razorpay_api_secret.get_secret_value()))
 
 
 @dataclass
@@ -75,9 +81,7 @@ async def verify_browser_signature_async(params: dict) -> None:
 
 def verify_webhook_signature(body: str, signature: str) -> None:
     client = get_razorpay_client()
-    client.utility.verify_webhook_signature(
-        body, signature, settings.razorpay_webhook_secret.get_secret_value()
-    )
+    client.utility.verify_webhook_signature(body, signature, settings.razorpay_webhook_secret.get_secret_value())
 
 
 async def verify_webhook_signature_async(body: str, signature: str) -> None:
@@ -89,6 +93,7 @@ async def get_payment_by_order_id(db: AsyncSession, order_id: int) -> models.Pay
         select(models.Payment)
         .options(joinedload(models.Payment.order))
         .where(models.Payment.order_id == order_id)
+        .execution_options(populate_existing=True)
     )
     return result.scalar_one_or_none()
 
@@ -106,55 +111,77 @@ async def set_razorpay_order_id_if_null(db: AsyncSession, payment_id: int, rzp_o
 async def process_captured_payment(
     db: AsyncSession, provider_payment: dict, razorpay_order_id: str, local_order_id: int
 ) -> models.Payment:
+    await acquire_transaction_advisory_lock(db, namespace=2, key=local_order_id)
     payment = await get_payment_by_order_id(db, local_order_id)
     if not payment:
         raise PaymentServiceError("payment_not_found", f"No payment record for order {local_order_id}")
-
-    if payment.payment_status in PAYMENT_TERMINAL_STATES:
-        return payment
+    try:
+        CapturedPayment.model_validate(provider_payment)
+    except ValidationError as exc:
+        raise PaymentServiceError("invalid_payment", "Provider payment data is invalid") from exc
 
     if payment.razorpay_order_id and payment.razorpay_order_id != razorpay_order_id:
         raise PaymentServiceError("order_mismatch", "Razorpay order ID mismatch.")
+    if provider_payment.get("order_id") != razorpay_order_id or provider_payment.get("currency") != payment.currency:
+        raise PaymentServiceError("payment_mismatch", "Payment currency or provider order does not match.")
+    if provider_payment.get("status") != "captured":
+        raise PaymentServiceError("payment_not_captured", "Payment has not been captured.")
+    if payment.razorpay_payment_id and payment.razorpay_payment_id != provider_payment["id"]:
+        raise PaymentServiceError("payment_id_mismatch", "A different payment is already linked to this order")
+    if payment.payment_status in PAYMENT_TERMINAL_STATES - {"cancelled"}:
+        if (
+            payment.payment_status in {"refund_pending", "refund_failed", "amount_mismatch_error"}
+            and not payment.refund_id
+        ):
+            return await issue_refund(db, local_order_id)
+        return payment
+    was_cancelled = payment.payment_status == "cancelled"
 
     if not payment.razorpay_order_id:
         payment.razorpay_order_id = razorpay_order_id
 
     payment.razorpay_payment_id = provider_payment.get("id")
-    payment.payment_method = provider_payment.get("method")
-    
+
     amount_paid = provider_payment.get("amount", 0)
+    payment.captured_amount = amount_paid
     expected_amount = int(payment.order.total_cost * 100)
 
     if amount_paid != expected_amount:
         payment.payment_status = "amount_mismatch_error"
         payment.order.print_status = "failed"
         await db.commit()
-        
+
         try:
             await issue_refund(db, local_order_id)
-        except Exception as e:
-            pass
+        except Exception:
+            log.exception("automatic_refund_failed", extra={"target_id": local_order_id})
 
         raise PaymentServiceError("amount_mismatch", "Amount paid does not match the order total.")
 
-    payment.payment_status = "completed"
+    payment.payment_status = "refund_pending" if was_cancelled else "completed"
     payment.payment_datetime = datetime.now(UTC)
     await db.commit()
+    if was_cancelled:
+        # A late provider capture after local cancellation must be refunded.
+        return await issue_refund(db, local_order_id)
     return payment
 
 
 async def issue_refund(db: AsyncSession, order_id: int) -> models.Payment:
+    await acquire_transaction_advisory_lock(db, namespace=2, key=order_id)
     payment = await get_payment_by_order_id(db, order_id)
     if not payment:
         raise RefundServiceError("payment_not_found", "Payment record not found.")
 
-    if payment.payment_status in {"refunded", "refund_pending"}:
+    if payment.payment_status == "refunded" or (payment.refund_id and payment.refund_status != "failed"):
         return payment
 
     if not payment.razorpay_payment_id:
         raise RefundServiceError("no_payment_id", "Cannot refund: no Razorpay payment ID.")
 
     payment.payment_status = "refund_pending"
+    if not payment.refund_idempotency_key:
+        payment.refund_idempotency_key = str(uuid.uuid4())
     await db.commit()
 
     try:
@@ -162,14 +189,32 @@ async def issue_refund(db: AsyncSession, order_id: int) -> models.Payment:
         refund_data = await call_razorpay(
             client.payment.refund,
             payment.razorpay_payment_id,
-            {"notes": {"reason": "Amount mismatch or admin requested"}}
+            {"notes": {"reason": "Amount mismatch, cancellation or admin requested"}},
+            headers={"X-Refund-Idempotency": payment.refund_idempotency_key},
         )
-        payment.payment_status = "refunded"
-        payment.order.print_status = "refunded"
+        if not refund_data.get("id") or refund_data.get("status") not in {"pending", "processed", "failed"}:
+            raise RefundServiceError("invalid_refund", "Provider refund response requires reconciliation")
+        # A signed webhook may already have committed while the SDK request was in flight.
+        await acquire_transaction_advisory_lock(db, namespace=2, key=order_id)
+        payment = await get_payment_by_order_id(db, order_id)
+        if payment.payment_status == "refunded" or payment.refund_status == "partial":
+            return payment
         payment.refund_id = refund_data.get("id")
+        payment.refund_status = refund_data.get("status", "pending")
+        if payment.refund_status == "processed":
+            payment.payment_status = "refunded"
+            payment.order.print_status = "refunded"
+        elif payment.refund_status == "failed":
+            payment.payment_status = "refund_failed"
         await db.commit()
         return payment
     except Exception as exc:
+        await db.rollback()
+        await acquire_transaction_advisory_lock(db, namespace=2, key=order_id)
+        payment = await get_payment_by_order_id(db, order_id)
+        if payment.payment_status == "refunded" or payment.refund_id:
+            return payment
         payment.payment_status = "refund_failed"
         await db.commit()
-        raise RefundServiceError("refund_api_error", f"Razorpay refund failed: {exc}")
+        log.exception("refund_provider_failed", extra={"target_id": order_id})
+        raise RefundServiceError("refund_api_error", "Refund could not be confirmed; staff review is required") from exc

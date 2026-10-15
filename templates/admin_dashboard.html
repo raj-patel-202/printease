@@ -1,7 +1,8 @@
 {% extends "admin_layout.html" %}
 
 {% block admin_nav %}
-<button class="btn-ghost" onclick="logoutAdmin()" id="logout-btn"><img src="/static/icons/login.svg" style="height: 18px; width: auto; vertical-align: middle; margin-right: 6px; transform: scaleX(-1);" class="svg-icon">Logout</button>
+<a class="btn-ghost" href="/admin/operations">Users &amp; operations</a>
+<button class="btn-ghost" onclick="logoutAdmin()" id="logout-btn"><img src="{{ static_asset(request, path='icons/login.svg') }}" style="height: 18px; width: auto; vertical-align: middle; margin-right: 6px; transform: scaleX(-1);" class="svg-icon">Logout</button>
 {% endblock %}
 
 {% block styles %}
@@ -396,7 +397,7 @@
       renderActiveOrders(data.items);
       document.getElementById('active-orders-pagination').innerHTML = renderPaginationHtml(data, 'activeOrders');
     } catch (err) {
-      document.getElementById('active-orders-container').innerHTML = `<div class="empty-state"><div class="empty-state-icon"><img src="/static/icons/error.svg" class="svg-icon" style="height: 1em; width: auto;"></div>Failed to load orders.</div>`;
+      document.getElementById('active-orders-container').innerHTML = `<div class="empty-state"><div class="empty-state-icon"><img src="{{ static_asset(request, path='icons/error.svg') }}" class="svg-icon" style="height: 1em; width: auto;"></div>Failed to load orders.</div>`;
     }
   }
 
@@ -408,7 +409,7 @@
       renderFailedPayments(data.items);
       document.getElementById('failed-payments-pagination').innerHTML = renderPaginationHtml(data, 'failedPayments');
     } catch (err) {
-      document.getElementById('failed-payments-container').innerHTML = `<div class="empty-state"><div class="empty-state-icon"><img src="/static/icons/error.svg" class="svg-icon" style="height: 1em; width: auto;"></div>Failed to load payments.</div>`;
+      document.getElementById('failed-payments-container').innerHTML = `<div class="empty-state"><div class="empty-state-icon"><img src="{{ static_asset(request, path='icons/error.svg') }}" class="svg-icon" style="height: 1em; width: auto;"></div>Failed to load payments.</div>`;
     }
   }
 
@@ -479,7 +480,7 @@
     if (orders.length === 0) {
       container.innerHTML = `
         <div class="empty-state">
-          <div class="empty-state-icon"><img src="/static/icons/order.svg" class="svg-icon" style="height: 48px; width: auto; opacity: 0.5;"></div>
+          <div class="empty-state-icon"><img src="{{ static_asset(request, path='icons/order.svg') }}" class="svg-icon" style="height: 48px; width: auto; opacity: 0.5;"></div>
           <p>No active orders found.</p>
         </div>
       `;
@@ -490,10 +491,10 @@
       <table class="admin-table">
         <thead>
           <tr>
-            <th><img src="/static/icons/order.svg" class="svg-icon" style="height: 14px; width: auto; vertical-align: middle; margin-right: 4px;">Order ID</th>
-            <th><img src="/static/icons/information.svg" class="svg-icon" style="height: 14px; width: auto; vertical-align: middle; margin-right: 4px;">Configuration</th>
+            <th><img src="{{ static_asset(request, path='icons/order.svg') }}" class="svg-icon" style="height: 14px; width: auto; vertical-align: middle; margin-right: 4px;">Order ID</th>
+            <th><img src="{{ static_asset(request, path='icons/information.svg') }}" class="svg-icon" style="height: 14px; width: auto; vertical-align: middle; margin-right: 4px;">Configuration</th>
             <th>Status</th>
-            <th><img src="/static/icons/pdf.svg" class="svg-icon" style="height: 14px; width: auto; vertical-align: middle; margin-right: 4px;">Document</th>
+            <th><img src="{{ static_asset(request, path='icons/pdf.svg') }}" class="svg-icon" style="height: 14px; width: auto; vertical-align: middle; margin-right: 4px;">Document</th>
             <th>Actions</th>
           </tr>
         </thead>
@@ -518,7 +519,7 @@
           <td data-label="Status"><span class="status-badge status-${order.print_status}">${order.print_status}</span></td>
           <td data-label="Document">
             <button class="btn-action-secondary" onclick="viewOrderPdf(${order.id}, '${order.file_name}')">
-              <img src="/static/icons/pdf.svg" class="svg-icon" style="height: 16px; width: auto; vertical-align: middle; margin-right: 4px;"> View PDF
+              <img src="{{ static_asset(request, path='icons/pdf.svg') }}" class="svg-icon" style="height: 16px; width: auto; vertical-align: middle; margin-right: 4px;"> View PDF
             </button>
           </td>
           <td data-label="Actions" class="actions-cell">${actionHtml}</td>
@@ -535,7 +536,7 @@
     if (payments.length === 0) {
       container.innerHTML = `
         <div class="empty-state">
-          <div class="empty-state-icon"><img src="/static/icons/information.svg" class="svg-icon" style="height: 48px; width: auto; opacity: 0.5;"></div>
+          <div class="empty-state-icon"><img src="{{ static_asset(request, path='icons/information.svg') }}" class="svg-icon" style="height: 48px; width: auto; opacity: 0.5;"></div>
           <p>No payment issues found.</p>
         </div>
       `;
@@ -546,8 +547,8 @@
       <table class="admin-table">
         <thead>
           <tr>
-            <th><img src="/static/icons/order.svg" class="svg-icon" style="height: 14px; width: auto; vertical-align: middle; margin-right: 4px;">Order ID</th>
-            <th><img src="/static/icons/time.svg" class="svg-icon" style="height: 14px; width: auto; vertical-align: middle; margin-right: 4px;">Event Date</th>
+            <th><img src="{{ static_asset(request, path='icons/order.svg') }}" class="svg-icon" style="height: 14px; width: auto; vertical-align: middle; margin-right: 4px;">Order ID</th>
+            <th><img src="{{ static_asset(request, path='icons/time.svg') }}" class="svg-icon" style="height: 14px; width: auto; vertical-align: middle; margin-right: 4px;">Event Date</th>
             <th>Payment Status</th>
             <th>Cost</th>
           </tr>
@@ -628,7 +629,7 @@
 
   async function logoutAdmin() {
     const btn = document.getElementById('logout-btn');
-    btn.innerHTML = '<img src="/static/icons/login.svg" style="height: 18px; width: auto; vertical-align: middle; margin-right: 6px; transform: scaleX(-1);" class="svg-icon">Logging out...';
+    btn.innerHTML = '<img src="{{ static_asset(request, path='icons/login.svg') }}" style="height: 18px; width: auto; vertical-align: middle; margin-right: 6px; transform: scaleX(-1);" class="svg-icon">Logging out...';
     btn.disabled = true;
     await fetch('/api/admin/logout', { method: 'POST' });
     window.location.href = '/admin/login';

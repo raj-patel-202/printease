@@ -18,3 +18,55 @@ resource/uploads/
 # Databases
 *.db
 *.sqlite3
+.pytest_cache/
+.ruff_cache/
+load-results*
+load-sessions*.json
+*.dump
+migration-preview.sql
+.validation/
+
+# Local secrets and credentials (keep the safe example above)
+*.pem
+*.key
+*.p12
+*.pfx
+credentials*.json
+service-account*.json
+.aws/
+.codex/
+.agents/
+printer-pc/agent_config.json
+
+# Local database files, dumps and backups
+*.sqlite
+*.db-wal
+*.db-shm
+*.sqlite3-wal
+*.sqlite3-shm
+*.backup
+*.sql.gz
+/backups/
+/postgres_data/
+/pgdata/
+/caddy_data/
+/caddy_config/
+
+# Runtime output and generated development artifacts
+*.log
+/logs/
+/tmp/
+/temp/
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+.mypy_cache/
+.pyright/
+.tox/
+.nox/
+*.egg-info/
+/build/
+/dist/
+.DS_Store
+Thumbs.db

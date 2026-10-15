@@ -1,7 +1,7 @@
 {% extends "layout.html" %}
 
 {% block styles %}
-<link rel="stylesheet" href="{{ url_for('static', path='css/register.css') }}"/>
+<link rel="stylesheet" href="{{ static_asset(request, path='css/register.css') }}"/>
 {% endblock %}
 
 {% block active_nav %}
@@ -18,7 +18,7 @@
       <p>Sign up in seconds and start uploading files for fast, affordable printing.</p>
     </div>
 
-    <form id="registerForm" class="auth-card reveal">
+    <form method="post" id="registerForm" class="auth-card reveal">
 
       <div class="form-group">
         <label for="username">Username</label>
@@ -42,7 +42,7 @@
           <input type="password" id="password" name="password"
                  placeholder="Create a strong password"
                  required minlength="8" autocomplete="new-password" />
-          <button type="button" class="toggle-pw" id="togglePw" aria-label="Toggle password"><img id="pwIcon" src="{{ url_for('static', path='icons/view_password.svg') }}?v=2" alt="Toggle password" style="height: 18px; width: auto;" class="svg-icon"></button>
+          <button type="button" class="toggle-pw" id="togglePw" aria-label="Toggle password"><img id="pwIcon" src="{{ static_asset(request, path='icons/view_password.svg') }}" alt="Toggle password" style="height: 18px; width: auto;" class="svg-icon"></button>
         </div>
         <div class="strength-meter" id="strengthMeter">
           <div class="strength-bar"><div class="strength-fill" id="strengthFill"></div></div>
@@ -75,5 +75,5 @@
 {% endblock %}
 
 {% block scripts %}
-<script src="{{ url_for('static', path='js/register.js') }}"></script>
+<script src="{{ static_asset(request, path='js/register.js') }}"></script>
 {% endblock %}

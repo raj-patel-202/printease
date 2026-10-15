@@ -1,0 +1,31 @@
+{
+    servers {
+        timeouts {
+            read_header 10s
+            read_body 60s
+            write 90s
+            idle 2m
+        }
+    }
+}
+
+{$SITE_DOMAIN} {
+    # Bound multipart bodies before FastAPI spools them. Leave room for metadata.
+    request_body {
+        max_size 22MB
+    }
+    # Close rejected streams so unread body bytes cannot poison a keep-alive request.
+    handle_errors 413 {
+        respond "Request body exceeds the upload limit" 413 {
+            close
+        }
+    }
+    reverse_proxy web:8000 {
+        transport http {
+            dial_timeout 5s
+            response_header_timeout 45s
+        }
+    }
+    header -Server
+    header Strict-Transport-Security "max-age=31536000"
+}

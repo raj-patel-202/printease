@@ -14,7 +14,7 @@
       <p>Access your orders, upload files, and manage your print jobs.</p>
     </div>
 
-    <form id="loginForm" class="auth-card reveal">
+    <form method="post" id="loginForm" class="auth-card reveal">
 
       <div class="form-group">
         <label for="username">Email Address</label>
@@ -47,5 +47,5 @@
 {% endblock %}
 
 {% block scripts %}
-<script type="module" src="{{ url_for('static', path='js/login.js') }}"></script>
+<script type="module" src="{{ static_asset(request, path='js/login.js') }}"></script>
 {% endblock %}

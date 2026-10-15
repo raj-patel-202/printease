@@ -6,12 +6,12 @@ Flow:  GET /next  ->  GET /jobs/{id}/file  ->  (print)  ->  POST /jobs/{id}/resu
 Auth:  Authorization: Bearer <AGENT_TOKEN>
        X-Agent-Session: random id the agent generates on each start
 """
-import json
+
 import logging
 import secrets
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Header, HTTPException, Response, status
+from fastapi import APIRouter, Depends, Header, HTTPException, Response, Request, status
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 from sqlalchemy import select, update
@@ -24,11 +24,14 @@ from services.print_dispatcher import dispatcher
 log = logging.getLogger("printease.agent")
 
 
-def require_agent(authorization: Annotated[str | None, Header()] = None):
+async def require_agent(request: Request, authorization: Annotated[str | None, Header()] = None):
     token = (authorization or "").removeprefix("Bearer ").strip()
     expected = settings.agent_token.get_secret_value()
     if not secrets.compare_digest(token.encode(), expected.encode()):
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Invalid agent token")
+    ensure_authority = getattr(request.app.state, "ensure_authority", None)
+    if ensure_authority and not await ensure_authority():
+        raise HTTPException(503, "Printer coordination is temporarily unavailable")
 
 
 router = APIRouter(prefix="/api/agent", tags=["agent"], dependencies=[Depends(require_agent)])
@@ -50,66 +53,65 @@ def _require_current(order_id: int, session: str):
 
 @router.get("/next")
 async def next_job(db: DBSession, x_agent_session: Session, x_agent_printer: PrinterName = None):
-    dispatcher.touch_agent(x_agent_printer)
+    async with dispatcher.lock:
+        dispatcher.touch_agent(x_agent_printer)
 
-    cur = dispatcher.current
-    if cur and cur["session"] != x_agent_session:
-        # The agent that owned this job restarted without reporting back.
-        log.warning("Agent restarted mid-job; failing order %s", cur["order_id"])
-        await dispatcher.fail_order(cur["order_id"])
-        dispatcher.end_job()
-    elif cur:
-        return _no_job()  # same session still busy; it should not be asking
+        cur = dispatcher.current
+        if cur and cur["session"] != x_agent_session:
+            # The agent that owned this job restarted without reporting back.
+            log.warning("Agent restarted mid-job; failing order %s", cur["order_id"])
+            await dispatcher.fail_order(cur["order_id"])
+            dispatcher.end_job()
+        elif cur:
+            return _no_job()  # same session still busy; it should not be asking
 
-    if not dispatcher.is_running:
-        return _no_job()
+        if not dispatcher.is_running:
+            return _no_job()
 
-    result = await db.execute(
-        select(models.Order)
-        .join(models.Payment)
-        .where(
-            models.Order.print_status == "pending",
-            models.Payment.payment_status == "completed",
+        result = await db.execute(
+            select(models.Order)
+            .join(models.Payment)
+            .where(
+                models.Order.print_status == "pending",
+                models.Payment.payment_status == "completed",
+            )
+            .order_by(models.Order.date_ordered.asc(), models.Order.id.asc())
+            .limit(1)
         )
-        .order_by(models.Order.date_ordered.asc())
-        .limit(1)
-    )
-    order = result.scalar_one_or_none()
-    if not order:
-        return _no_job()
+        order = result.scalar_one_or_none()
+        if not order:
+            return _no_job()
 
-    if not order.file_path.exists():
-        log.error("Order %s: PDF missing on disk", order.id)
-        await db.execute(
-            update(models.Order).where(models.Order.id == order.id).values(print_status="failed")
+        if not order.file_path.exists():
+            log.error("Order %s: PDF missing on disk", order.id)
+            await db.execute(update(models.Order).where(models.Order.id == order.id).values(print_status="failed"))
+            await db.commit()
+            return _no_job()
+
+        claim = await db.execute(
+            update(models.Order)
+            .where(models.Order.id == order.id, models.Order.print_status == "pending")
+            .values(print_status="printing")
         )
+        if claim.rowcount == 0:
+            await db.rollback()
+            return _no_job()
         await db.commit()
-        return _no_job()
 
-    claim = await db.execute(
-        update(models.Order)
-        .where(models.Order.id == order.id, models.Order.print_status == "pending")
-        .values(print_status="printing")
-    )
-    if claim.rowcount == 0:
-        await db.rollback()
-        return _no_job()
-    await db.commit()
-
-    dispatcher.begin_job(order.id, x_agent_session)
-    log.info("Order %s handed to agent", order.id)
-    return {
-        "order_id": order.id,
-        "total_pages": order.total_pages,
-        "options": {
-            "copies": order.copies,
-            "color_mode": order.color_mode,
-            "side_mode": order.side_mode,
-            "orientation": order.orientation,
-            "paper_size": order.paper_size,
+        dispatcher.begin_job(order.id, x_agent_session)
+        log.info("Order %s handed to agent", order.id)
+        return {
             "order_id": order.id,
-        },
-    }
+            "total_pages": order.total_pages,
+            "options": {
+                "copies": order.copies,
+                "color_mode": order.color_mode,
+                "side_mode": order.side_mode,
+                "orientation": order.orientation,
+                "paper_size": order.paper_size,
+                "order_id": order.id,
+            },
+        }
 
 
 @router.get("/jobs/{order_id}/file")
@@ -128,17 +130,18 @@ class JobResult(BaseModel):
 
 @router.post("/jobs/{order_id}/result")
 async def job_result(order_id: int, body: JobResult, db: DBSession, x_agent_session: Session):
-    _require_current(order_id, x_agent_session)
-    new_status = "completed" if body.success else "failed"
-    await db.execute(
-        update(models.Order)
-        .where(models.Order.id == order_id, models.Order.print_status == "printing")
-        .values(print_status=new_status)
-    )
-    await db.commit()
-    dispatcher.end_job()
+    async with dispatcher.lock:
+        _require_current(order_id, x_agent_session)
+        new_status = "completed" if body.success else "failed"
+        await db.execute(
+            update(models.Order)
+            .where(models.Order.id == order_id, models.Order.print_status == "printing")
+            .values(print_status=new_status)
+        )
+        await db.commit()
+        dispatcher.end_job()
     if body.success:
         log.info("Order %s printed", order_id)
     else:
-        log.warning("Order %s failed on agent: %s", order_id, body.error)
+        log.warning("Order %s failed on agent", order_id)
     return {"status": new_status}
